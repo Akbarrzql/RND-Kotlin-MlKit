@@ -21,10 +21,17 @@ import android.view.Surface
 import android.view.TextureView
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.platedetection.databinding.ActivityPlateDetectionBinding
 import com.example.platedetection.ml.AutoModel1
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.objects.ObjectDetection
+import com.google.mlkit.vision.text.Text
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.TextRecognizer
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import org.tensorflow.lite.support.common.FileUtil
 import org.tensorflow.lite.support.image.ImageProcessor
 import org.tensorflow.lite.support.image.TensorImage
@@ -44,6 +51,7 @@ class PlateDetectionActivity : AppCompatActivity() {
     lateinit var handler: Handler
     lateinit var cameraManager: CameraManager
     lateinit var textureView: TextureView
+    private lateinit var textRecognizer: TextRecognizer
     private lateinit var binding: ActivityPlateDetectionBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,6 +60,8 @@ class PlateDetectionActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         get_permission()
+
+        textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
         labels = FileUtil.loadLabels(this, "labels.txt")
         imageProcessor = ImageProcessor.Builder()
@@ -105,16 +115,61 @@ class PlateDetectionActivity : AppCompatActivity() {
                         paint.style = Paint.Style.FILL
                         canvas.drawText(labels.get(classes.get(index).toInt())+" "+fl.toString(), locations.get(x+1)*w, locations.get(x)*h, paint)
                     }
+
+                    // recognize text center of plate
+                    if (index == 0){
+                        val left = locations[x + 1] * w
+                        val top = locations[x] * h
+                        val right = locations[x + 3] * w
+                        val bottom = locations[x + 2] * h
+
+                        if (left >= 0 && top >= 0 && right >= 0 && bottom >= 0 && right <= w && bottom <= h) {
+                            val width = right - left
+                            val height = bottom - top
+                            val crop = Bitmap.createBitmap(mutable, left.toInt(), top.toInt(), width.toInt(), height.toInt())
+                            recognizeText(crop)
+                        } else {
+                            binding.tvPlatNomor.text = ""
+                        }
+                    }
+
+
                 }
 
                 imageView.setImageBitmap(mutable)
-
 
             }
         }
 
         cameraManager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
 
+    }
+
+    private fun recognizeText(bitmap: Bitmap) {
+        val image = InputImage.fromBitmap(bitmap, 0)
+        textRecognizer.process(image)
+            .addOnSuccessListener { texts ->
+                processTextResult(texts)
+            }
+            .addOnFailureListener { e ->
+                // Handle text recognition failure
+                e.printStackTrace()
+            }
+    }
+
+    private fun processTextResult(texts: Text) {
+        val detectedText = StringBuilder()
+
+        for (block in texts.textBlocks) {
+            for (line in block.lines) {
+                for (element in line.elements) {
+                    detectedText.append(element.text)
+                }
+            }
+        }
+
+        val plateNumber = detectedText.toString().trim()
+        binding.tvPlatNomor.text = plateNumber
     }
 
     override fun onDestroy() {
