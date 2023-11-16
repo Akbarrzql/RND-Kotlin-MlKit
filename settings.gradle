@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 rootProject.name = "RND-kotlin-apps"
 include ':app'
 include ':textrecognize'
+include ':platedetection'
