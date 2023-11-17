@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">objectdetectionplate</string>
+    <string name="open_camera">Open Camera</string>
+    <string name="recognize_text">Recognize Text</string>
 </resources>
