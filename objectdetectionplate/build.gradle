@@ -2,15 +2,16 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
 }
+apply from: '../shared_dependencies.gradle'
 
 android {
     namespace 'com.example.objectdetectionplate'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.example.objectdetectionplate"
         minSdk 26
-        targetSdk 33
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 
@@ -29,6 +30,9 @@ android {
     }
     kotlinOptions {
         jvmTarget = '1.8'
+    }
+    buildFeatures {
+        viewBinding true
     }
 }
 

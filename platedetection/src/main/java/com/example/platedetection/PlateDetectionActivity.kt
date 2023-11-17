@@ -59,7 +59,7 @@ class PlateDetectionActivity : AppCompatActivity() {
         binding = ActivityPlateDetectionBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        get_permission()
+        getPermission()
 
         textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
@@ -209,7 +209,7 @@ class PlateDetectionActivity : AppCompatActivity() {
         }, handler)
     }
 
-    fun get_permission(){
+    fun getPermission(){
         if(ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED){
             requestPermissions(arrayOf(android.Manifest.permission.CAMERA), 101)
         }
@@ -221,7 +221,7 @@ class PlateDetectionActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if(grantResults[0] != PackageManager.PERMISSION_GRANTED){
-            get_permission()
+            getPermission()
         }
     }
 }
