@@ -3,6 +3,7 @@ package com.example.objectdetectionplate
 import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -16,6 +17,12 @@ import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.TextRecognizer
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import org.opencv.android.OpenCVLoader
+import org.opencv.android.Utils
+import org.opencv.core.Mat
+import org.opencv.core.Size
+import org.opencv.imgproc.Imgproc
+import java.io.IOException
 import kotlin.math.abs
 
 class ObjectDetectionPlateActivity : AppCompatActivity() {
@@ -33,6 +40,9 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
         binding = ActivityObjectDetectionPlateBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        //openCV
+        OpenCVLoader.initDebug()
+
         //init text recognizer
         textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
@@ -40,6 +50,50 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
         checkForPermission()
         onClick()
     }
+
+    private fun processImageWithOpenCV(imageUri: Uri) {
+        try {
+            val inputBitmap: Bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, imageUri)
+
+            val inputImage: Mat = Mat()
+            Utils.bitmapToMat(inputBitmap, inputImage)
+
+            if (!inputImage.empty()) {
+                // Konversi ke gambar skala abu-abu
+                val grayscaleImage = Mat()
+                Imgproc.cvtColor(inputImage, grayscaleImage, Imgproc.COLOR_BGR2GRAY)
+
+                // kontrast
+                val enhancedImage = Mat()
+                Imgproc.equalizeHist(grayscaleImage, enhancedImage)
+
+                // threshold untuk hitam putih
+                val thresholdValue = 220.0 // Sesuaikan nilai threshold
+                Imgproc.threshold(enhancedImage, enhancedImage, thresholdValue, 255.0, Imgproc.THRESH_BINARY_INV) // Menggunakan THRESH_BINARY_INV untuk membuat latar belakang putih dan objek hitam
+
+                // Operasi pembukaan untuk menghilangkan noise kecil
+                val kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, Size(3.0, 3.0))
+                Imgproc.morphologyEx(enhancedImage, enhancedImage, Imgproc.MORPH_OPEN, kernel)
+
+                val outputBitmap = Bitmap.createBitmap(enhancedImage.cols(), enhancedImage.rows(), Bitmap.Config.ARGB_8888)
+                Utils.matToBitmap(enhancedImage, outputBitmap)
+
+                binding.imageView.setImageBitmap(outputBitmap)
+
+                // Clean OpenCV
+                inputImage.release()
+                grayscaleImage.release()
+                enhancedImage.release()
+            } else {
+                // Handle jika citra kosong
+                Toast.makeText(this, "Gagal memproses gambar", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
+
+
 
     private fun checkForPermission(){
         cameraPermission = arrayOf(
@@ -176,7 +230,8 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
 
     private val cameraActivityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
-            binding.imageView.setImageURI(imageUri)
+            //proses gambar dengan openCV
+            processImageWithOpenCV(imageUri!!)
         } else{
             Toast.makeText(this, "Membatalkan", Toast.LENGTH_SHORT).show()
         }
@@ -193,6 +248,11 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
             val data = result.data
             imageUri = data?.data
             binding.imageView.setImageURI(imageUri)
+
+            // Proses gambar dengan OpenCV
+            if (imageUri != null) {
+                processImageWithOpenCV(imageUri!!)
+            }
         } else{
             Toast.makeText(this, "Membatalkan", Toast.LENGTH_SHORT).show()
         }
