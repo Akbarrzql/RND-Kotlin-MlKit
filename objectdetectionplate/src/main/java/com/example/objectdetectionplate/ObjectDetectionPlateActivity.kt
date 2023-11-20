@@ -68,7 +68,7 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
                 Imgproc.equalizeHist(grayscaleImage, enhancedImage)
 
                 // threshold untuk hitam putih
-                val thresholdValue = 220.0 // Sesuaikan nilai threshold
+                val thresholdValue = 220.0
                 Imgproc.threshold(enhancedImage, enhancedImage, thresholdValue, 255.0, Imgproc.THRESH_BINARY_INV) // Menggunakan THRESH_BINARY_INV untuk membuat latar belakang putih dan objek hitam
 
                 // Operasi pembukaan untuk menghilangkan noise kecil
@@ -85,7 +85,6 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
                 grayscaleImage.release()
                 enhancedImage.release()
             } else {
-                // Handle jika citra kosong
                 Toast.makeText(this, "Gagal memproses gambar", Toast.LENGTH_SHORT).show()
             }
         } catch (e: IOException) {
