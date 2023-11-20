@@ -1,32 +1,14 @@
 package com.example.objectdetectionplate
 
-import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.ImageFormat
-import android.graphics.SurfaceTexture
-import android.hardware.camera2.CameraCaptureSession
-import android.hardware.camera2.CameraDevice
-import android.hardware.camera2.CameraManager
-import android.hardware.camera2.CaptureRequest
-import android.media.ImageReader
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Handler
-import android.os.HandlerThread
 import android.provider.MediaStore
-import android.view.Surface
-import android.view.TextureView
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import com.example.objectdetectionplate.databinding.ActivityObjectDetectionPlateBinding
 import com.example.textrecognize.utils.setProgressDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -34,8 +16,7 @@ import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.TextRecognizer
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
+import kotlin.math.abs
 
 class ObjectDetectionPlateActivity : AppCompatActivity() {
 
@@ -134,7 +115,7 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
                 val licensePlateAspectRatio = 4.0
 
                 // Periksa apakah rasio aspek elemen mendekati rasio aspek plat nomor
-                return Math.abs(elementAspectRatio - licensePlateAspectRatio) < aspectRatioThreshold
+                return abs(elementAspectRatio - licensePlateAspectRatio) < aspectRatioThreshold
             }
         }
         return false
