@@ -173,13 +173,31 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
         }
         return false
     }
-    private fun extractFormattedText(fullText: String): String {
-        // Pola regex yang umum untuk berbagai macam format plat nomor
-        val pattern = Regex("[A-Z]{1,2} ?\\d{1,4} [A-Z]{1,3}[A-Z\\d ]*")
-        val matchResult = pattern.find(fullText)            // Cari pola regex dalam teks yang diberikan
 
-        return matchResult?.value ?: "Format tidak ditemukan"
+    private fun extractFormattedText(fullText: String): String {
+        // Pola regex untuk format plat nomor seperti "B 3345 BKJ"
+        val pattern1 = Regex("[A-Z]{1,2} ?\\d{1,4} [A-Z]{1,3}[A-Z\\d ]*")
+
+        // Pola regex untuk format plat nomor seperti "12 3445 89"
+        val pattern2 = Regex("\\b\\d{2} \\d{4} \\d{2}\\b")
+
+        // Pola regex untuk format plat nomor seperti "355-07"
+        val pattern3 = Regex("\\d{3}-\\d{2}")
+
+        // Pola regex untuk format plat nomor seperti "H 1 P"
+        val pattern4 = Regex("[A-Z] \\d [A-Z]")
+
+        // Cari pola regex dalam teks yang diberikan
+        val matchResult1 = pattern1.find(fullText)
+        val matchResult2 = pattern2.find(fullText)
+        val matchResult3 = pattern3.find(fullText)
+        val matchResult4 = pattern4.find(fullText)
+
+        // Prioritaskan format pertama, jika tidak ditemukan, gunakan format kedua, jika tidak gunakan format ketiga, jika tidak gunakan format keempat
+        return matchResult1?.value ?: matchResult2?.value ?: matchResult3?.value ?: matchResult4?.value ?: "Format tidak ditemukan"
     }
+
+
 
     private fun extractFormattedTextBottom(fullText: String): String {
         // Pola regex yang umum untuk mendeteksi 4 angka kadaluarsa plat nomor
@@ -246,7 +264,6 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
         if (result.resultCode == RESULT_OK) {
             val data = result.data
             imageUri = data?.data
-            binding.imageView.setImageURI(imageUri)
 
             // Proses gambar dengan OpenCV
             if (imageUri != null) {
