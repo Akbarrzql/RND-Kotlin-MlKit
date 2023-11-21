@@ -60,33 +60,28 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
             Utils.bitmapToMat(inputBitmap, inputImage)
 
             if (!inputImage.empty()) {
-
-                val grayscaleImage = Mat()
-                Imgproc.cvtColor(inputImage, grayscaleImage, Imgproc.COLOR_BGR2GRAY)
-
+                // Ekstraksi channel kuning (warna kuning dalam format BGR adalah gabungan dari warna merah dan hijau)
                 val yellowChannel = Mat()
                 Core.extractChannel(inputImage, yellowChannel, 1) // Extract channel hijau
 
                 // Ambang batas (threshold) untuk menghasilkan gambar hitam putih (biner)
-                val thresholdValue = 180.0
+                val thresholdValue = 150.0 // Sesuaikan nilai threshold sesuai kebutuhan
                 Imgproc.threshold(yellowChannel, yellowChannel, thresholdValue, 255.0, Imgproc.THRESH_BINARY)
 
-                // membuat latar belakang putih dan objek hitam
-                Core.bitwise_not(yellowChannel, yellowChannel)
+                // Inversi warna dengan menjaga hitam tetap hitam dan putih tetap putih
+                val invertedChannel = Mat()
+                Core.bitwise_not(yellowChannel, invertedChannel)
 
-                // menghilangkan noise kecil
-                val kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, Size(3.0, 3.0))
-                Imgproc.morphologyEx(yellowChannel, yellowChannel, Imgproc.MORPH_OPEN, kernel)
-
-                val outputBitmap = Bitmap.createBitmap(yellowChannel.cols(), yellowChannel.rows(), Bitmap.Config.ARGB_8888)
-                Utils.matToBitmap(yellowChannel, outputBitmap)
+                // Tampilkan gambar pada ImageView
+                val outputBitmap = Bitmap.createBitmap(invertedChannel.cols(), invertedChannel.rows(), Bitmap.Config.ARGB_8888)
+                Utils.matToBitmap(invertedChannel, outputBitmap)
 
                 binding.imageView.setImageBitmap(outputBitmap)
 
-                // Clean OpenCV
+                // Bersihkan sumber daya OpenCV
                 inputImage.release()
-                grayscaleImage.release()
                 yellowChannel.release()
+                invertedChannel.release()
             } else {
                 Toast.makeText(this, "Gagal memproses gambar", Toast.LENGTH_SHORT).show()
             }
@@ -94,6 +89,7 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
             e.printStackTrace()
         }
     }
+
 
 
 
