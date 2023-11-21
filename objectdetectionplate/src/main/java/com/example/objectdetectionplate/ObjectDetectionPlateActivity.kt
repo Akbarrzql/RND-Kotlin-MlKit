@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -120,6 +121,10 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
     private fun recognizeText() {
         val dialog = setProgressDialog(this, "Mohon tunggu", "Sedang mengenali teks")
         dialog.show()
+
+        // Use the processed image from OpenCV
+        val inputBitmap: Bitmap = (binding.imageView.drawable as BitmapDrawable).bitmap
+        val inputImage = com.google.mlkit.vision.common.InputImage.fromBitmap(inputBitmap, 0)
 
         val image = com.google.mlkit.vision.common.InputImage.fromFilePath(this, imageUri!!)
         val textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
