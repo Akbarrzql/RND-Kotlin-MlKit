@@ -19,6 +19,7 @@ import com.google.mlkit.vision.text.TextRecognizer
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import org.opencv.android.OpenCVLoader
 import org.opencv.android.Utils
+import org.opencv.core.Core
 import org.opencv.core.Mat
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
@@ -59,31 +60,33 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
             Utils.bitmapToMat(inputBitmap, inputImage)
 
             if (!inputImage.empty()) {
-                // Konversi ke gambar skala abu-abu
+
                 val grayscaleImage = Mat()
                 Imgproc.cvtColor(inputImage, grayscaleImage, Imgproc.COLOR_BGR2GRAY)
 
-                // kontrast
-                val enhancedImage = Mat()
-                Imgproc.equalizeHist(grayscaleImage, enhancedImage)
+                val yellowChannel = Mat()
+                Core.extractChannel(inputImage, yellowChannel, 1) // Extract channel hijau
 
-                // threshold untuk hitam putih
-                val thresholdValue = 220.0
-                Imgproc.threshold(enhancedImage, enhancedImage, thresholdValue, 255.0, Imgproc.THRESH_BINARY_INV) // Menggunakan THRESH_BINARY_INV untuk membuat latar belakang putih dan objek hitam
+                // Ambang batas (threshold) untuk menghasilkan gambar hitam putih (biner)
+                val thresholdValue = 180.0
+                Imgproc.threshold(yellowChannel, yellowChannel, thresholdValue, 255.0, Imgproc.THRESH_BINARY)
 
-                // Operasi pembukaan untuk menghilangkan noise kecil
+                // membuat latar belakang putih dan objek hitam
+                Core.bitwise_not(yellowChannel, yellowChannel)
+
+                // menghilangkan noise kecil
                 val kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, Size(3.0, 3.0))
-                Imgproc.morphologyEx(enhancedImage, enhancedImage, Imgproc.MORPH_OPEN, kernel)
+                Imgproc.morphologyEx(yellowChannel, yellowChannel, Imgproc.MORPH_OPEN, kernel)
 
-                val outputBitmap = Bitmap.createBitmap(enhancedImage.cols(), enhancedImage.rows(), Bitmap.Config.ARGB_8888)
-                Utils.matToBitmap(enhancedImage, outputBitmap)
+                val outputBitmap = Bitmap.createBitmap(yellowChannel.cols(), yellowChannel.rows(), Bitmap.Config.ARGB_8888)
+                Utils.matToBitmap(yellowChannel, outputBitmap)
 
                 binding.imageView.setImageBitmap(outputBitmap)
 
                 // Clean OpenCV
                 inputImage.release()
                 grayscaleImage.release()
-                enhancedImage.release()
+                yellowChannel.release()
             } else {
                 Toast.makeText(this, "Gagal memproses gambar", Toast.LENGTH_SHORT).show()
             }
@@ -91,6 +94,7 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
             e.printStackTrace()
         }
     }
+
 
 
 
@@ -137,7 +141,7 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
                             val formattedText = extractFormattedText(resultText1)
                             val formattedText1 = extractFormattedTextBottom(resultText)
                             val mergedText = "$formattedText\n$formattedText1"
-                            binding.tvRecognizedText.text = mergedText
+                            binding.tvRecognizedText.text = formattedText
                         }
                     }
                 }
@@ -175,26 +179,42 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
     }
 
     private fun extractFormattedText(fullText: String): String {
-        // Pola regex untuk format plat nomor seperti "B 3345 BKJ"
-        val pattern1 = Regex("[A-Z]{1,2} ?\\d{1,4} [A-Z]{1,3}[A-Z\\d ]*")
+        // Pola regex untuk format plat nomor seperti "B 3345 BKJ" dan "B 3345 0ZZ"
+        val pattern = Regex("[A-Z]{1,2} [0-9]{1,4} [A-Z]{1,3}|[A-Z]{1,2} [0-9]{1,4} [0-9]{1,3}")
 
-        // Pola regex untuk format plat nomor seperti "12 3445 89"
-        val pattern2 = Regex("\\b\\d{2} \\d{4} \\d{2}\\b")
+        // Pola regex untuk format plat nomor seperti "B3345BKJ" atau "B33450ZZ" atau "B PKD"
+        val pattern1 = Regex("[A-Z]{1,2} \\d{4} [A-Z\\d]{1,3}|[A-Z]{1,2} \\d{4} (?:[A-Z]{1,3}|\\d{1,3})")
 
-        // Pola regex untuk format plat nomor seperti "355-07"
-        val pattern3 = Regex("\\d{3}-\\d{2}")
+        // Pola regex untuk format plat nomor seperti "12 3445 89" atau "71-03" atau "71-03"
+        val pattern2 = Regex("\\d{2,4} \\d{4,8} \\d{2,4}|\\d{2,4}[-]\\d{2,4}|\\d{2,4}[ ]\\d{2,4}")
+
+        // Pola regex untuk format plat nomor seperti "3555-07" atau "355-111" atau "70834-IX" atau "1-00"
+        val pattern3 = Regex("\\d{3,5}[-]\\d{3,4}|\\d{3,5}[-]\\d{2,3}|\\d{1}[-]\\d{2}|\\d{1}[-][A-Z]{1,3}")
 
         // Pola regex untuk format plat nomor seperti "H 1 P"
-        val pattern4 = Regex("[A-Z] \\d [A-Z]")
+        val pattern4 = Regex("[A-Z]{1,2} \\d [A-Z]{1,4}")
+
+        //Pola regex untuk format plat nomor seperti "RI 1" atau "RI 123"
+        val pattern5 = Regex("RI \\d{1,3}")
 
         // Cari pola regex dalam teks yang diberikan
+        val matchResult = pattern.find(fullText)
         val matchResult1 = pattern1.find(fullText)
         val matchResult2 = pattern2.find(fullText)
         val matchResult3 = pattern3.find(fullText)
         val matchResult4 = pattern4.find(fullText)
+        val matchResult5 = pattern5.find(fullText)
 
-        // Prioritaskan format pertama, jika tidak ditemukan, gunakan format kedua, jika tidak gunakan format ketiga, jika tidak gunakan format keempat
-        return matchResult1?.value ?: matchResult2?.value ?: matchResult3?.value ?: matchResult4?.value ?: "Format tidak ditemukan"
+
+        return when {
+            matchResult != null -> matchResult.value
+            matchResult1 != null -> matchResult1.value
+            matchResult2 != null -> matchResult2.value
+            matchResult3 != null -> matchResult3.value
+            matchResult4 != null -> matchResult4.value
+            matchResult5 != null -> matchResult5.value
+            else -> "Format tidak ditemukan atau tidak didukung"
+        }
     }
 
 
@@ -249,6 +269,8 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
         if (result.resultCode == RESULT_OK) {
             //proses gambar dengan openCV
             processImageWithOpenCV(imageUri!!)
+
+//            binding.imageView.setImageURI(imageUri)
         } else{
             Toast.makeText(this, "Membatalkan", Toast.LENGTH_SHORT).show()
         }
@@ -264,6 +286,7 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
         if (result.resultCode == RESULT_OK) {
             val data = result.data
             imageUri = data?.data
+//            binding.imageView.setImageURI(imageUri)
 
             // Proses gambar dengan OpenCV
             if (imageUri != null) {
