@@ -26,6 +26,8 @@ import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
 import java.io.IOException
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 class ObjectDetectionPlateActivity : AppCompatActivity() {
 
@@ -36,6 +38,7 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
     private lateinit var cameraPermission: Array<String>
     private lateinit var storagePermission: Array<String>
     private lateinit var textRecognizer: TextRecognizer
+    private var croppedBitmap: Bitmap? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -92,9 +95,6 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
     }
 
 
-
-
-
     private fun checkForPermission(){
         cameraPermission = arrayOf(
             android.Manifest.permission.CAMERA,
@@ -143,6 +143,17 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
                             val formattedText1 = extractFormattedTextBottom(resultText)
                             val mergedText = "$formattedText\n$formattedText1"
                             binding.tvRecognizedText.text = formattedText
+
+                            val expandedLeft = max(0, element.boundingBox!!.left - 1200)
+                            val expandedTop = max(0, element.boundingBox!!.top - 500)
+                            val ecpandedBottom = min(image.height, element.boundingBox!!.bottom + 500)
+                            val expandedRight = min(image.width, element.boundingBox!!.right + 600)
+                            val expandedWidth = expandedRight - expandedLeft
+                            val expandedHeight = ecpandedBottom - expandedTop
+
+                            croppedBitmap = Bitmap.createBitmap(image.bitmapInternal!!, expandedLeft, expandedTop, expandedWidth, expandedHeight)
+
+                            binding.imageView.setImageBitmap(croppedBitmap)
                         }
                     }
                 }
@@ -153,6 +164,7 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
                 Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
             }
     }
+
 
 
     // Fungsi untuk memeriksa apakah elemen memiliki rasio aspek yang mendekati plat nomor
@@ -269,9 +281,9 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
     private val cameraActivityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             //proses gambar dengan openCV
-            processImageWithOpenCV(imageUri!!)
+//            processImageWithOpenCV(imageUri!!)
 
-//            binding.imageView.setImageURI(imageUri)
+            binding.imageView.setImageURI(imageUri)
         } else{
             Toast.makeText(this, "Membatalkan", Toast.LENGTH_SHORT).show()
         }
@@ -287,12 +299,12 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
         if (result.resultCode == RESULT_OK) {
             val data = result.data
             imageUri = data?.data
-//            binding.imageView.setImageURI(imageUri)
+            binding.imageView.setImageURI(imageUri)
 
             // Proses gambar dengan OpenCV
-            if (imageUri != null) {
-                processImageWithOpenCV(imageUri!!)
-            }
+//            if (imageUri != null) {
+//                processImageWithOpenCV(imageUri!!)
+//            }
         } else{
             Toast.makeText(this, "Membatalkan", Toast.LENGTH_SHORT).show()
         }
