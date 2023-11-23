@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">facelandmarkrecognition</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="tv_gallery_placeholder">Click + to add an image or a video
+        to begin running the face landmarker.</string>
+</resources>
