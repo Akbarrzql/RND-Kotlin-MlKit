@@ -8,5 +8,5 @@ data class FaceDetection (
     @PrimaryKey(autoGenerate = true)
     val id: Int,
     val name: String,
-    val image: String
+    val image: String,
 )
