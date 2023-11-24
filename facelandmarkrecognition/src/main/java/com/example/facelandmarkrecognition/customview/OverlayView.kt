@@ -11,6 +11,8 @@
     import androidx.lifecycle.ViewModelProvider
     import androidx.lifecycle.ViewModelStoreOwner
     import com.example.facelandmarkrecognition.R
+    import com.example.facelandmarkrecognition.data.model.FaceDetection
+    import com.example.facelandmarkrecognition.data.model.LandmarkPoint
     import com.example.facelandmarkrecognition.data.repository.FaceDetectionRepository
     import com.example.facelandmarkrecognition.viewmodel.FaceDetectionViewModel
     import com.google.mediapipe.tasks.vision.core.RunningMode
@@ -27,6 +29,7 @@
         private var pointPaint = Paint()
         private var faceDetectionRepository: FaceDetectionRepository? = null
         private var viewModelStoreOwner: ViewModelStoreOwner? = null
+        private var detectedFace: FaceDetection? = null
 
         private var scaleFactor: Float = 1f
         private var imageWidth: Int = 1
@@ -36,6 +39,11 @@
 
         init {
             initPaints()
+        }
+
+        fun setDetectedFace(face: FaceDetection?) {
+            detectedFace = face
+            invalidate()
         }
 
         fun setFaceDetectionRepository(repository: FaceDetectionRepository) {
@@ -66,97 +74,82 @@
             pointPaint.style = Paint.Style.FILL
         }
 
-          override fun draw(canvas: Canvas) {
+        override fun draw(canvas: Canvas) {
             super.draw(canvas)
             if (results == null || results!!.faceLandmarks().isEmpty()) {
                 clear()
                 return
             }
 
-              results?.let { faceLandmarkerResult ->
-                  val faceLandmarksList = faceLandmarkerResult.faceLandmarks()
-                  if (faceLandmarksList.isNotEmpty()) {
-                      val faceLandmarks = faceLandmarksList[0]
+            results?.let { faceLandmarkerResult ->
+                val faceLandmarksList = faceLandmarkerResult.faceLandmarks()
+                if (faceLandmarksList.isNotEmpty()) {
+                    val faceLandmarks = faceLandmarksList[0]
 
-                      // Calculate bounding box around the face
-                      var minX = Float.MAX_VALUE
-                      var minY = Float.MAX_VALUE
-                      var maxX = Float.MIN_VALUE
-                      var maxY = Float.MIN_VALUE
+                    // Calculate bounding box around the face
+                    var minX = Float.MAX_VALUE
+                    var minY = Float.MAX_VALUE
+                    var maxX = Float.MIN_VALUE
+                    var maxY = Float.MIN_VALUE
 
-                      for (landmark in faceLandmarks) {
-                          val x = landmark.x() * imageWidth * scaleFactor
-                          val y = landmark.y() * imageHeight * scaleFactor
+                    for (landmark in faceLandmarks) {
+                        val x = landmark.x() * imageWidth * scaleFactor
+                        val y = landmark.y() * imageHeight * scaleFactor
 
-                          minX = min(minX, x)
-                          minY = min(minY, y)
-                          maxX = max(maxX, x)
-                          maxY = max(maxY, y)
-                      }
+                        minX = min(minX, x)
+                        minY = min(minY, y)
+                        maxX = max(maxX, x)
+                        maxY = max(maxY, y)
+                    }
 
-                      // Draw bounding box
-                      linePaint.color = Color.GREEN
-                      canvas.drawRect(minX, minY, maxX, maxY, linePaint)
+                    // Draw bounding box
+                    linePaint.color = Color.GREEN
+                    canvas.drawRect(minX, minY, maxX, maxY, linePaint)
 
-                      // Draw landmarks
-                      pointPaint.color = Color.YELLOW
-                      for (landmark in faceLandmarks) {
-                          val x = landmark.x() * imageWidth * scaleFactor
-                          val y = landmark.y() * imageHeight * scaleFactor
-                          canvas.drawPoint(x, y, pointPaint)
-                      }
+                    // Draw landmarks
+                    pointPaint.color = Color.YELLOW
+                    for (landmark in faceLandmarks) {
+                        val x = landmark.x() * imageWidth * scaleFactor
+                        val y = landmark.y() * imageHeight * scaleFactor
+                        canvas.drawPoint(x, y, pointPaint)
+                    }
 
-                      // Draw connectors
-                      linePaint.color = ContextCompat.getColor(context!!, R.color.mp_color_primary)
-                      FaceLandmarker.FACE_LANDMARKS_CONNECTORS.forEach { connector ->
-                          val startLandmark = faceLandmarks[connector.start()]
-                          val endLandmark = faceLandmarks[connector.end()]
+                    // Draw connectors
+                    linePaint.color = ContextCompat.getColor(context!!, R.color.mp_color_primary)
+                    FaceLandmarker.FACE_LANDMARKS_CONNECTORS.forEach { connector ->
+                        val startLandmark = faceLandmarks[connector.start()]
+                        val endLandmark = faceLandmarks[connector.end()]
 
-                          canvas.drawLine(
-                              startLandmark.x() * imageWidth * scaleFactor,
-                              startLandmark.y() * imageHeight * scaleFactor,
-                              endLandmark.x() * imageWidth * scaleFactor,
-                              endLandmark.y() * imageHeight * scaleFactor,
-                              linePaint
-                          )
-                      }
+                        canvas.drawLine(
+                            startLandmark.x() * imageWidth * scaleFactor,
+                            startLandmark.y() * imageHeight * scaleFactor,
+                            endLandmark.x() * imageWidth * scaleFactor,
+                            endLandmark.y() * imageHeight * scaleFactor,
+                            linePaint
+                        )
+                    }
 
-                      // Convert detected landmarks to Normalized Landmark format
-                      val singleLandmark = faceLandmarks[0]
-                      Log.d("Single Landmark", singleLandmark.toString())
+                    // Convert detected landmarks to Normalized Landmark format
+                    val singleLandmark = faceLandmarks[0]
+                    Log.d("Single Landmark", singleLandmark.toString())
 
-                      val normalizedLandmark = "<Normalized Landmark (x=${singleLandmark.x()} y=${singleLandmark.y()} z=${singleLandmark.z()})>"
+                    val normalizedLandmark = "<Normalized Landmark (x=${singleLandmark.x()} y=${singleLandmark.y()} z=${singleLandmark.z()})>"
+                    Log.d("Detected Landmark", normalizedLandmark)
 
-                      Log.d("Detected Landmark", normalizedLandmark)
+                    detectedFace?.let { face ->
+                        // Draw name in the bounding box
+                        val nameX = minX
+                        val nameY = minY - 20 // Adjust the position of the name
+                        val namePaint = Paint().apply {
+                            color = Color.WHITE
+                            textSize = 30F // Adjust the text size
+                        }
+                        canvas.drawText(face.name, nameX, nameY, namePaint)
+                    }
+                }
+            }
+        }
 
-                      // Match landmarks with database and get name
-                        val matchedName = faceDetectionRepository?.matchFaceLandmarks(faceLandmarks)
-                      Log.d("Matched Name", matchedName.toString())
-
-                      // Draw name in the bounding box
-                      if (matchedName != null) {
-                          val nameX = minX
-                          val nameY = minY - 20 // Adjust the position of the name
-                          val namePaint = Paint().apply {
-                              color = Color.WHITE
-                              textSize = 30F // Adjust the text size
-                          }
-                            canvas.drawText(matchedName.name, nameX, nameY, namePaint)
-                      } else {
-                          val nameX = minX
-                          val nameY = minY - 20 // Adjust the position of the name
-                          val namePaint = Paint().apply {
-                              color = Color.WHITE
-                              textSize = 30F // Adjust the text size
-                          }
-                          canvas.drawText("Wajah Tidak Terdeteksi", nameX, nameY, namePaint)
-                      }
-
-
-                  }
-              }
-
-          }
 
         fun setResults(
             faceLandmarkerResults: FaceLandmarkerResult,

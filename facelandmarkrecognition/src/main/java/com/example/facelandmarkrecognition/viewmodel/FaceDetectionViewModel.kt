@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import com.example.facelandmarkrecognition.data.model.FaceDetection
 import com.example.facelandmarkrecognition.data.model.FaceDetectionDatabase
+import com.example.facelandmarkrecognition.data.model.LandmarkPoint
 import com.example.facelandmarkrecognition.data.repository.FaceDetectionRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -24,6 +25,12 @@ class FaceDetectionViewModel(application: Application) : AndroidViewModel(applic
     fun addFace(faceDetection: FaceDetection) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.addFace(faceDetection)
+        }
+    }
+
+    fun updateFaceLandmarks(id: Int, detectedLandmarks: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.updateFaceLandmarks(id, detectedLandmarks)
         }
     }
 

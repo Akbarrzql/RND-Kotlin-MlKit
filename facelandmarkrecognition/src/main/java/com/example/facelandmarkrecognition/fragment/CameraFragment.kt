@@ -18,16 +18,19 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.widget.ViewPager2.SCROLL_STATE_DRAGGING
 import com.example.facelandmarkrecognition.FaceLandmarkerHelper
 import com.example.facelandmarkrecognition.viewmodel.MainViewModel
 import com.example.facelandmarkrecognition.adapter.FaceBlendshapesResultAdapter
 import com.example.facelandmarkrecognition.databinding.FragmentCameraBinding
+import com.example.facelandmarkrecognition.viewmodel.FaceDetectionViewModel
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import kotlin.math.pow
 
 class CameraFragment : Fragment(), FaceLandmarkerHelper.LandmarkerListener {
 
@@ -50,7 +53,9 @@ class CameraFragment : Fragment(), FaceLandmarkerHelper.LandmarkerListener {
     private var imageAnalyzer: ImageAnalysis? = null
     private var camera: Camera? = null
     private var cameraProvider: ProcessCameraProvider? = null
-    private var cameraFacing = CameraSelector.LENS_FACING_FRONT
+    private var cameraFacing = CameraSelector.LENS_FACING_BACK
+    private lateinit var faceDetectionViewModel: FaceDetectionViewModel
+    private lateinit var landmark: String
 
     /** Blocking ML operations are performed using this executor */
     private lateinit var backgroundExecutor: ExecutorService
@@ -101,6 +106,8 @@ class CameraFragment : Fragment(), FaceLandmarkerHelper.LandmarkerListener {
     ): View {
         _fragmentCameraBinding =
             FragmentCameraBinding.inflate(inflater, container, false)
+
+        faceDetectionViewModel = ViewModelProvider(this)[FaceDetectionViewModel::class.java]
 
         return fragmentCameraBinding.root
     }
@@ -234,11 +241,85 @@ class CameraFragment : Fragment(), FaceLandmarkerHelper.LandmarkerListener {
                     resultBundle.inputImageWidth,
                     RunningMode.LIVE_STREAM
                 )
+
+                landmark = resultBundle.result.faceLandmarks()[0][0].toString()
+                Log.d("landmrark Camera", landmark)
+
+                //menampilkan isi di room database dan mencocolkan dengan landmark yang didapat dengan toleransi hingga 0.1
+
+
+                faceDetectionViewModel.readAllData.observe(viewLifecycleOwner){
+                    for (i in it.indices){
+                        Log.d("landmarkkkk", it[i].faceLandmarks)
+                        if (landmark == it[i].faceLandmarks){
+                            faceDetectionViewModel.updateFaceLandmarks(it[i].id, landmark)
+                            Toast.makeText(requireContext(), "Nama : ${it[i].name}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+//                    val face = it.find { face -> face.faceLandmarks == landmark }
+//                    if (face != null) {
+//                        faceDetectionViewModel.updateFaceLandmarks(face.id, landmark)
+//                        Toast.makeText(requireContext(), "Berhasil Update", Toast.LENGTH_SHORT).show()
+//                    }else{
+//                        Log.d("landmarkkkk", "tidak ada")
+//                    }
+
+                }
+
+//                faceDetectionViewModel.readAllData.observe(viewLifecycleOwner) { faceDetectionList ->
+//                    for (face in faceDetectionList) {
+//                        Log.d("landmark in DB", face.faceLandmarks)
+//
+//                        // Compare the detected landmark with landmarks in the database with tolerance
+//                        if (areLandmarksSimilar(landmark, face.faceLandmarks)) {
+//                            // Update the face landmarks in the database
+//                            fragmentCameraBinding.overlay.setDetectedFace(face)
+////                            faceDetectionViewModel.updateFaceLandmarks(face.id, landmark)
+////                            Toast.makeText(requireContext(), "Nama : ${face.name}", Toast.LENGTH_SHORT).show()
+//                        }else{
+//                            fragmentCameraBinding.overlay.setDetectedFace(null)
+//                        }
+//                    }
+//                }
+
+
                 // Force a redraw
                 fragmentCameraBinding.overlay.invalidate()
             }
         }
     }
+
+    private fun areLandmarksSimilar(
+        landmark1: String,
+        landmark2: String
+    ): Boolean {
+        // Parse the landmark strings to extract x, y, and z values
+        val regex = Regex("x=([\\d.-]+) y=([\\d.-]+) z=([\\d.-]+)")
+        val match1 = regex.find(landmark1)
+        val match2 = regex.find(landmark2)
+
+        if (match1 != null && match2 != null) {
+            // Extract x, y, and z values
+            val (x1, y1, z1) = match1.destructured
+            val (x2, y2, z2) = match2.destructured
+
+            // Convert string values to Double
+            val x1Double = x1.toDouble()
+            val y1Double = y1.toDouble()
+            val z1Double = z1.toDouble()
+
+            val x2Double = x2.toDouble()
+            val y2Double = y2.toDouble()
+            val z2Double = z2.toDouble()
+
+            // Compare each component (x, y, z) directly
+            return x1Double == x2Double && y1Double == y2Double && z1Double == z2Double
+        }
+
+        // Return false if parsing fails or components are not comparable
+        return false
+    }
+
 
     override fun onEmpty() {
         fragmentCameraBinding.overlay.clear()

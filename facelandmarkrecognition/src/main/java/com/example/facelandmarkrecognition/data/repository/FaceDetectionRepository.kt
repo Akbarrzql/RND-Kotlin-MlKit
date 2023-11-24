@@ -1,10 +1,10 @@
 package com.example.facelandmarkrecognition.data.repository
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import com.example.facelandmarkrecognition.data.model.FaceDetection
 import com.example.facelandmarkrecognition.data.model.FaceDetectionDao
 import com.example.facelandmarkrecognition.data.model.LandmarkPoint
-import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 
 class FaceDetectionRepository(private val faceDetectionDao: FaceDetectionDao) {
 
@@ -14,15 +14,8 @@ class FaceDetectionRepository(private val faceDetectionDao: FaceDetectionDao) {
         faceDetectionDao.addFace(faceDetection)
     }
 
-    fun matchFaceLandmarks(detectedLandmarks: List<NormalizedLandmark>): FaceDetection? {
-        val detectedLandmarksString = convertLandmarksToString(detectedLandmarks.map {
-            LandmarkPoint(it.x(), it.y(), it.z())
-        })
-        return faceDetectionDao.matchFaceLandmarks(detectedLandmarksString)
+    suspend fun updateFaceLandmarks(id: Int, detectedLandmarks: String) {
+        faceDetectionDao.updateFaceLandmarks(id, detectedLandmarks)
     }
 
-
-    private fun convertLandmarksToString(landmarks: List<LandmarkPoint>): String {
-        return landmarks.joinToString(";") { "${it.x},${it.y},${it.z}" }
-    }
 }

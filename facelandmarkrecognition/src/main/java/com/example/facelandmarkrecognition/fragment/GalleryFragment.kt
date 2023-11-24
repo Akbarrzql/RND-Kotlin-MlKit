@@ -249,10 +249,25 @@ class GalleryFragment : Fragment(), FaceLandmarkerHelper.LandmarkerListener {
                                 bitmap.width,
                                 RunningMode.IMAGE
                             )
+                            landmark = result.result.faceLandmarks().get(0).get(0).toString()
+                            Log.d("X and Y coordinates", landmark)
 
-                            //ketika landmark sama dengan yang di database maka akan muncul dialog bahwa wajah sudah ada
-                            //jika tidak maka akan muncul dialog untuk menambahkan wajah
+                            //menampilkan isi di room database ke logcat
+                            faceDetectionViewModel.readAllData.observe(viewLifecycleOwner) { faceDetection ->
+                                for (face in faceDetection) {
 
+                                    //megencek apakah landmark yang didapat sama dengan landmark yang ada di database susuai dengan nama yang diinputkan
+                                    if (landmark == face.faceLandmarks) {
+                                        Log.d("Data in Room", face.toString())
+                                        Toast.makeText(requireContext(), "Nama: ${face.name}", Toast.LENGTH_SHORT).show()
+
+                                        fragmentGalleryBinding.overlay.setDetectedFace(face)
+                                    }else{
+                                        fragmentGalleryBinding.overlay.setDetectedFace(null)
+                                        Toast.makeText(requireContext(), "Wajah tidak ditemukan", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
 
                         }
                     } ?: run { Log.e(TAG, "Error running face landmarker.") }
@@ -334,6 +349,36 @@ class GalleryFragment : Fragment(), FaceLandmarkerHelper.LandmarkerListener {
                             faceBlendshapesResultAdapter.notifyDataSetChanged()
                         }
 
+//                        activity?.runOnUiThread {
+//                            if (fragmentGalleryBinding.recyclerviewResults.scrollState != ViewPager2.SCROLL_STATE_DRAGGING) {
+//                                faceBlendshapesResultAdapter.updateResults(result.results[resultIndex])
+//                                faceBlendshapesResultAdapter.notifyDataSetChanged()
+//                            }
+//                            fragmentGalleryBinding.overlay.setResults(
+//                                result.results[resultIndex],
+//                                result.inputImageHeight,
+//                                result.inputImageWidth,
+//                                RunningMode.VIDEO
+//                            )
+//                            landmark = result.results[resultIndex].faceLandmarks().get(0).get(0).toString()
+//                            Log.d("X and Y coordinates", landmark)
+//
+//                            //menampilkan isi di room database ke logcat
+//                            faceDetectionViewModel.readAllData.observe(viewLifecycleOwner) { faceDetection ->
+//                                for (face in faceDetection) {
+//
+//                                    //megencek apakah landmark yang didapat sama dengan landmark yang ada di database susuai dengan nama yang diinputkan
+//                                    if (landmark == face.faceLandmarks) {
+//                                        Log.d("Data in Face", face.toString())
+//                                        Toast.makeText(requireContext(), "Nama: ${face.name}", Toast.LENGTH_SHORT).show()
+//
+//                                        fragmentGalleryBinding.overlay.setDetectedFace(face)
+//                                    }
+//                                }
+//                            }
+//
+//                        }
+
                     }
                 }
             },
@@ -341,6 +386,7 @@ class GalleryFragment : Fragment(), FaceLandmarkerHelper.LandmarkerListener {
             VIDEO_INTERVAL_MS,
             TimeUnit.MILLISECONDS
         )
+
     }
 
     private fun updateDisplayView(mediaType: MediaType) {
