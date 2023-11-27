@@ -11,6 +11,7 @@ import com.example.facedetection.graphic.RectangleOverlay
 import com.google.android.gms.tasks.Task
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.Face
+import com.google.mlkit.vision.face.FaceContour
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 
@@ -29,6 +30,7 @@ class CameraAnalyzer(
         .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
         .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
         .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+        .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
         .setMinFaceSize(0.15f)
         .enableTracking()
         .build()
@@ -58,10 +60,12 @@ class CameraAnalyzer(
         val faceList = allFaces.value
 
         results.forEach { face ->
+            Log.d(TAG, "Face contours: ${face.allContours}")
+            Log.d(TAG, "Face landmarks: ${face.allLandmarks}")
             val existingFace = faceList?.find { it.id == (face.trackingId?.toInt() ?: -1) }
-            val faceName = existingFace?.name ?: "New Face"
+            val faceName = existingFace?.name ?: ""
 
-            val faceGraphic = RectangleOverlay(graphicOverlay, face, rect, faceName)
+            val faceGraphic = RectangleOverlay(graphicOverlay, face, rect, "")
             graphicOverlay.add(faceGraphic)
 
             if (existingFace != null) {

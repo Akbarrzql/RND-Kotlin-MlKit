@@ -8,6 +8,7 @@ import com.example.facelandmarkrecognition.databinding.ActivityFaceLandmarkBindi
 import com.example.facelandmarkrecognition.fragment.CameraFragment
 import com.example.facelandmarkrecognition.fragment.GalleryFragment
 import com.google.android.material.tabs.TabLayoutMediator
+import org.opencv.android.OpenCVLoader
 
 class FaceLandmarkActivity : AppCompatActivity() {
 
@@ -17,6 +18,8 @@ class FaceLandmarkActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityFaceLandmarkBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        OpenCVLoader.initDebug()
 
         val adapter = ViewPagerAdapter(supportFragmentManager)
 

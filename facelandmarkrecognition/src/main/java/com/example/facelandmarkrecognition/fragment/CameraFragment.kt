@@ -26,6 +26,7 @@ import com.example.facelandmarkrecognition.viewmodel.MainViewModel
 import com.example.facelandmarkrecognition.adapter.FaceBlendshapesResultAdapter
 import com.example.facelandmarkrecognition.databinding.FragmentCameraBinding
 import com.example.facelandmarkrecognition.viewmodel.FaceDetectionViewModel
+import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -39,6 +40,8 @@ class CameraFragment : Fragment(), FaceLandmarkerHelper.LandmarkerListener {
     }
 
     private var _fragmentCameraBinding: FragmentCameraBinding? = null
+    private var lastFrameLandmark: String? = null
+
 
     private val fragmentCameraBinding
         get() = _fragmentCameraBinding!!
@@ -53,9 +56,13 @@ class CameraFragment : Fragment(), FaceLandmarkerHelper.LandmarkerListener {
     private var imageAnalyzer: ImageAnalysis? = null
     private var camera: Camera? = null
     private var cameraProvider: ProcessCameraProvider? = null
-    private var cameraFacing = CameraSelector.LENS_FACING_BACK
+    private var cameraFacing = CameraSelector.LENS_FACING_FRONT
     private lateinit var faceDetectionViewModel: FaceDetectionViewModel
     private lateinit var landmark: String
+
+    private var lastLandmarkUpdateTime: Long = 0
+    private var isMoving: Boolean = false
+    private var movementThreshold: Float = 10F
 
     /** Blocking ML operations are performed using this executor */
     private lateinit var backgroundExecutor: ExecutorService
@@ -221,12 +228,11 @@ class CameraFragment : Fragment(), FaceLandmarkerHelper.LandmarkerListener {
             fragmentCameraBinding.viewFinder.display.rotation
     }
 
+
     // Update UI after face have been detected. Extracts original
     // image height/width to scale and place the landmarks properly through
     // OverlayView
-    override fun onResults(
-        resultBundle: FaceLandmarkerHelper.ResultBundle
-    ) {
+    override fun onResults(resultBundle: FaceLandmarkerHelper.ResultBundle) {
         activity?.runOnUiThread {
             if (_fragmentCameraBinding != null) {
                 if (fragmentCameraBinding.recyclerviewResults.scrollState != SCROLL_STATE_DRAGGING) {

@@ -44,8 +44,6 @@ class FaceLandmarkerHelper(
     val faceLandmarkerHelperListener: LandmarkerListener? = null
 ) {
 
-    // For this example this needs to be a var so it can be reset on changes.
-    // If the Face Landmarker will not change, a lazy val would be preferable.
     private var faceLandmarker: FaceLandmarker? = null
 
     init {
@@ -57,16 +55,10 @@ class FaceLandmarkerHelper(
         faceLandmarker = null
     }
 
-    // Return running status of FaceLandmarkerHelper
     fun isClose(): Boolean {
         return faceLandmarker == null
     }
 
-    // Initialize the Face landmarker using current settings on the
-    // thread that is using it. CPU can be used with Landmarker
-    // that are created on the main thread and used on a background thread, but
-    // the GPU delegate needs to be used on the thread that initialized the
-    // Landmarker
     fun setupFaceLandmarker() {
         // Set general face landmarker options
         val baseOptionBuilder = BaseOptions.builder()
@@ -143,7 +135,6 @@ class FaceLandmarkerHelper(
         }
     }
 
-    // Convert the ImageProxy to MP Image and feed it to FacelandmakerHelper.
     fun detectLiveStream(
         imageProxy: ImageProxy,
         isFrontCamera: Boolean
@@ -199,10 +190,6 @@ class FaceLandmarkerHelper(
         // be returned in returnLivestreamResult function
     }
 
-    // Accepts the URI for a video file loaded from the user's gallery and attempts to run
-    // face landmarker inference on the video. This process will evaluate every
-    // frame in the video and attach the results to a bundle that will be
-    // returned.
     fun detectVideoFile(
         videoUri: Uri,
         inferenceIntervalMs: Long
@@ -291,8 +278,6 @@ class FaceLandmarkerHelper(
         }
     }
 
-    // Accepted a Bitmap and runs face landmarker inference on it to return
-    // results back to the caller
     fun detectImage(image: Bitmap): ResultBundle? {
         if (runningMode != RunningMode.IMAGE) {
             throw IllegalArgumentException(

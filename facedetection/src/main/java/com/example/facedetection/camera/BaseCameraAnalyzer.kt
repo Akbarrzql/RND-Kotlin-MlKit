@@ -2,12 +2,16 @@ package com.example.facedetection.camera
 
 import android.annotation.SuppressLint
 import android.graphics.Rect
+import android.util.Log
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.example.facedetection.graphic.GraphicOverlay
+import com.example.facedetection.graphic.RectangleOverlay
 import com.google.android.gms.tasks.Task
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.Face
+import com.google.mlkit.vision.face.FaceContour
+import com.google.mlkit.vision.face.FaceDetection
 
 abstract class BaseCameraAnalyzer<T : List<Face>> : ImageAnalysis.Analyzer {
 
