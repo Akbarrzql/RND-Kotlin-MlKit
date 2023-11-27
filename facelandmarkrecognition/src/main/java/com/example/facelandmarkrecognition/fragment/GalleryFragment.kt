@@ -138,7 +138,7 @@ class GalleryFragment : Fragment(), FaceLandmarkerHelper.LandmarkerListener {
                         activity?.runOnUiThread {
                             if (fragmentGalleryBinding.recyclerviewResults.scrollState != ViewPager2.SCROLL_STATE_DRAGGING) {
                                 faceBlendshapesResultAdapter.updateResults(result.result)
-                                landmark = result.result.faceLandmarks().get(0).get(0).toString()
+                                landmark = result.result.faceLandmarks().toString()
                                 faceBlendshapesResultAdapter.notifyDataSetChanged()
                             }
                             fragmentGalleryBinding.overlay.setResults(
@@ -249,7 +249,7 @@ class GalleryFragment : Fragment(), FaceLandmarkerHelper.LandmarkerListener {
                                 bitmap.width,
                                 RunningMode.IMAGE
                             )
-                            landmark = result.result.faceLandmarks().get(0).get(0).toString()
+                            landmark = result.result.faceLandmarks().toString()
                             Log.d("X and Y coordinates", landmark)
 
                             //menampilkan isi di room database ke logcat
@@ -262,9 +262,6 @@ class GalleryFragment : Fragment(), FaceLandmarkerHelper.LandmarkerListener {
                                         Toast.makeText(requireContext(), "Nama: ${face.name}", Toast.LENGTH_SHORT).show()
 
                                         fragmentGalleryBinding.overlay.setDetectedFace(face)
-                                    }else{
-                                        fragmentGalleryBinding.overlay.setDetectedFace(null)
-                                        Toast.makeText(requireContext(), "Wajah tidak ditemukan", Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             }

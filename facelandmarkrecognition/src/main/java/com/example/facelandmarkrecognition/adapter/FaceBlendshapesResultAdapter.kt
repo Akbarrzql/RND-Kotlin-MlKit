@@ -36,7 +36,7 @@ class FaceBlendshapesResultAdapter :
         categories = MutableList(52) { null }
         if (faceLandmarkerResult != null) {
             //get landmark points x,y,z
-            val faceLandmarks = faceLandmarkerResult.faceLandmarks().get(0).get(0).toString()
+            val faceLandmarks = faceLandmarkerResult.faceLandmarks().toString()
             Log.d("landmark X, Y, Z", faceLandmarks)
             val sortedCategories = faceLandmarkerResult.faceBlendshapes().get()[0].sortedBy { -it.score() }
             val min = kotlin.math.min(sortedCategories.size, categories.size)
