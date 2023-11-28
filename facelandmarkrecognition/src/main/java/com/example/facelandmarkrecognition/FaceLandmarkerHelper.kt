@@ -31,6 +31,13 @@ import com.google.mediapipe.tasks.core.Delegate
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarker
 import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarkerResult
+import org.opencv.android.CameraBridgeViewBase
+import org.opencv.core.MatOfRect
+import org.opencv.core.Rect
+import org.opencv.core.Size
+import org.opencv.objdetect.CascadeClassifier
+import java.io.File
+import java.io.FileOutputStream
 
 class FaceLandmarkerHelper(
     var minFaceDetectionConfidence: Float = DEFAULT_FACE_DETECTION_CONFIDENCE,
@@ -297,12 +304,19 @@ class FaceLandmarkerHelper(
         // Run face landmarker using MediaPipe Face Landmarker API
         faceLandmarker?.detect(mpImage)?.also { landmarkResult ->
             val inferenceTimeMs = SystemClock.uptimeMillis() - startTime
-            return ResultBundle(
-                landmarkResult,
-                inferenceTimeMs,
-                image.height,
-                image.width
-            )
+            if (landmarkResult.faceLandmarks().size > 0) {
+                // Detected at least one face, display the detection
+                return ResultBundle(
+                    landmarkResult,
+                    inferenceTimeMs,
+                    image.height,
+                    image.width
+                )
+            } else {
+                // No face detected or only a few landmarks detected, consider it as a regular image
+                return null
+            }
+
         }
 
         // If faceLandmarker?.detect() returns null, this is likely an error. Returning null
