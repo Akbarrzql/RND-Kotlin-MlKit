@@ -22,10 +22,8 @@ abstract class BaseCameraAnalyzer<T : List<Face>> : ImageAnalysis.Analyzer {
     override fun analyze(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
         mediaImage?.let { image ->
-            // detect face in image
             detectInImage(InputImage.fromMediaImage(image, imageProxy.imageInfo.rotationDegrees))
                 .addOnSuccessListener { results ->
-                    // process face
                     onSuccess(results, graphicOverlay, image.cropRect)
                     imageProxy.close()
                 }

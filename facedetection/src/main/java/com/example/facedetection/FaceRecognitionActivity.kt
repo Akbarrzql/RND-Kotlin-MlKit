@@ -30,7 +30,6 @@ class FaceRecognitionActivity : AppCompatActivity() {
     private lateinit var cameraManager: CameraManager
     private var imageUri: Uri? = null
     private lateinit var cameraPermission: Array<String>
-
     private lateinit var viewModel: FaceDetectionViewModel
 
 
