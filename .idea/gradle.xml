@@ -19,6 +19,7 @@
             <option value="$PROJECT_DIR$/livenessfacedetection" />
             <option value="$PROJECT_DIR$/objectdetectionplate" />
             <option value="$PROJECT_DIR$/platedetection" />
+            <option value="$PROJECT_DIR$/testfacerecognition" />
             <option value="$PROJECT_DIR$/textrecognize" />
           </set>
         </option>

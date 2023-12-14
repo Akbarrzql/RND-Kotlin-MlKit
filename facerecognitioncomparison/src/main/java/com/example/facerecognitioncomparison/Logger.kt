@@ -14,6 +14,8 @@
  */
 package com.example.facerecognitioncomparison
 
+import android.util.Log
+
 // Logs message using log_textview present in activity_main.xml
 class Logger {
 
@@ -21,6 +23,7 @@ class Logger {
 
         fun log( message : String ) {
             MainActivity.setMessage(  MainActivity.logTextView.text.toString() + "\n" + ">> $message" )
+            Log.d( "LOG MASSAGE" , message )
             // To scroll to the last message
             // See this SO answer -> https://stackoverflow.com/a/37806544/10878733
             while ( MainActivity.logTextView.canScrollVertically(1) ) {

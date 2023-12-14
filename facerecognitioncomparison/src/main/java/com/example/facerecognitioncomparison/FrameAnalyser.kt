@@ -162,6 +162,8 @@ class FrameAnalyser(context: Context,
 
                         // Compute the average of all scores norms for each cluster.
                         val avgScores = nameScoreHashmap.values.map{ scores -> scores.toFloatArray().average() }
+                        //show result of cosine similarity
+                        Logger.log("Average score : $avgScores")
                         Logger.log("Average score for each user : $nameScoreHashmap")
 
                         val names = nameScoreHashmap.keys.toTypedArray()

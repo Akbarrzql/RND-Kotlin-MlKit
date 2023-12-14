@@ -50,8 +50,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cameraPermission: Array<String>
     private lateinit var storagePermission: Array<String>
     private lateinit var faceDetectionViewModel: FaceDetectionViewModel
-    private lateinit var detectedCountour: String
-
     private lateinit var detector: FaceDetector
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -97,22 +95,26 @@ class MainActivity : AppCompatActivity() {
                     binding.imageView.setImageBitmap(bitmapWithBoundingBox)
 
                     Toast.makeText(this, "Face detected", Toast.LENGTH_SHORT).show()
-                    detectedCountour = faces[0].getContour(FaceContour.FACE)?.points.toString()
-                    detectedCountour = getFaceContour(originalBitmap)
 
-                    //mendeteksi wajah jika sama dengan yang sudah ada di database
-                    val matchingFace = getMatchingFace(detectedCountour)
-                    Log.d("TAG", "detectFace: $matchingFace")
+                    val isSmile = (faces[0].smilingProbability ?: 0f) > 0.67f
+                    //get smile probability
+                    Log.d("TAG", "detectFace: ${faces[0].smilingProbability}")
 
-                    if (matchingFace?.faceContour == detectedCountour) {
-                        val bitmapWithBoundingBox = drawBoundingBoxesOnBitmap(originalBitmap, faces, matchingFace.namaKaryawan)
-                        binding.imageView.setImageBitmap(bitmapWithBoundingBox)
-                        Toast.makeText(this, "Wajah sudah terdaftar", Toast.LENGTH_SHORT).show()
-                    } else {
-                        val bitmapWithBoundingBox = drawBoundingBoxesOnBitmap(originalBitmap, faces, "Belum Terdaftar")
-                        binding.imageView.setImageBitmap(bitmapWithBoundingBox)
-                        Toast.makeText(this, "Wajah belum terdaftar", Toast.LENGTH_SHORT).show()
+                    if(isSmile){
+                        Toast.makeText(this, "Smile detected", Toast.LENGTH_SHORT).show()
+                    }else{
+                        Toast.makeText(this, "Smile not detected", Toast.LENGTH_SHORT).show()
                     }
+
+//                    if (matchingFace?.faceContour == detectedCountour) {
+//                        val bitmapWithBoundingBox = drawBoundingBoxesOnBitmap(originalBitmap, faces, matchingFace.namaKaryawan)
+//                        binding.imageView.setImageBitmap(bitmapWithBoundingBox)
+//                        Toast.makeText(this, "Wajah sudah terdaftar", Toast.LENGTH_SHORT).show()
+//                    } else {
+//                        val bitmapWithBoundingBox = drawBoundingBoxesOnBitmap(originalBitmap, faces, "Belum Terdaftar")
+//                        binding.imageView.setImageBitmap(bitmapWithBoundingBox)
+//                        Toast.makeText(this, "Wajah belum terdaftar", Toast.LENGTH_SHORT).show()
+//                    }
 
 //                    faceDetectionViewModel.readAllData.observe(this) { faceDetection ->
 //                        for (face in faceDetection) {
@@ -242,7 +244,7 @@ class MainActivity : AppCompatActivity() {
                 idKaryawan,
                 nfcId,
                 name,
-                detectedCountour
+                "detectedCountour"
             )
             faceDetectionViewModel.addFace(faceDetection)
             Toast.makeText(this@MainActivity, "Data berhasil disimpan", Toast.LENGTH_SHORT).show()

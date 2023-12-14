@@ -9,6 +9,7 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import com.example.objectdetectionplate.databinding.ActivityObjectDetectionPlateBinding
@@ -134,15 +135,18 @@ class ObjectDetectionPlateActivity : AppCompatActivity() {
                 dialog.dismiss()
 
                 // Loop melalui elemen teks yang terdeteksi
+
                 for (block in visionText.textBlocks) {
                     for (line in block.lines) {
                         for (element in line.elements) {
                             val resultText = element.text
                             val resultText1 = visionText.text
                             val formattedText = extractFormattedText(resultText1)
+                            val test = extractFormattedText(resultText1)
                             val formattedText1 = extractFormattedTextBottom(resultText)
                             val mergedText = "$formattedText\n$formattedText1"
                             binding.tvRecognizedText.text = formattedText
+                            Log.d("PLAT NOMOR ", test)
 
                             val expandedLeft = max(0, element.boundingBox!!.left - 1200)
                             val expandedTop = max(0, element.boundingBox!!.top - 500)

@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.DocumentsContract
 import android.text.method.ScrollingMovementMethod
+import android.util.Log
 import android.util.Size
 import android.view.View
 import android.view.WindowInsets

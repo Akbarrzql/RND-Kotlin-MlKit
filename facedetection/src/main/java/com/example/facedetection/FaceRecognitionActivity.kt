@@ -90,6 +90,7 @@ class FaceRecognitionActivity : AppCompatActivity() {
     }
 
     private fun pickCamera() {
+        /*
         val values = ContentValues()
         values.put(MediaStore.Images.Media.TITLE, "New Picture")
         values.put(MediaStore.Images.Media.DESCRIPTION, "From Camera")
@@ -99,6 +100,7 @@ class FaceRecognitionActivity : AppCompatActivity() {
         val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri)
         cameraActivityResultLauncher.launch(cameraIntent)
+         */
     }
 
     private val cameraActivityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
