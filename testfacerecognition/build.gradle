@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'kotlin-kapt'
 }
 
 android {
@@ -47,4 +48,18 @@ dependencies {
 
     // Face Detection
     implementation 'com.google.mlkit:face-detection:16.1.5'
+
+    //room
+    implementation "androidx.room:room-runtime:2.6.0"
+    implementation "androidx.room:room-ktx:2.6.0"
+    implementation 'androidx.room:room-paging:2.6.0'
+    kapt "androidx.room:room-compiler:2.6.0"
+
+    // lifecycle components
+    implementation "androidx.lifecycle:lifecycle-common-java8:2.6.2"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2"
+
+    //kotlin component
+    api "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3"
+    api "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
 }

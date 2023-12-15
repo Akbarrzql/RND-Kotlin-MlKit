@@ -1,11 +1,14 @@
 package com.example.testfacerecognition
 
 import android.annotation.SuppressLint
+import android.content.ContentValues.TAG
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.ImageFormat
 import android.graphics.Paint
+import android.graphics.PointF
 import android.graphics.PorterDuff
 import android.graphics.Rect
 import android.hardware.camera2.CameraCaptureSession
@@ -15,6 +18,7 @@ import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
 import android.media.Image
 import android.media.ImageReader
+import android.nfc.Tag
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
@@ -25,17 +29,23 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
 import com.example.testfacerecognition.databinding.ActivityMainBinding
+import com.example.testfacerecognition.viewmodel.FaceCountourViewModel
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetector
 import com.google.mlkit.vision.face.FaceDetectorOptions
+import com.google.mlkit.vision.face.FaceLandmark
+import kotlin.math.abs
+import kotlin.math.pow
 
 @Suppress("DEPRECATION")
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var detector: FaceDetector
+    private lateinit var faceCountourViewModel: FaceCountourViewModel
 
     private lateinit var handler: Handler
     private lateinit var handlerThread: HandlerThread
@@ -49,10 +59,21 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        faceCountourViewModel = ViewModelProvider(this)[FaceCountourViewModel::class.java]
+
         getPermissions()
         initialize()
         camera()
         mlKit()
+        onClick()
+    }
+
+    private fun onClick() {
+        binding.fabAddPhoto.setOnClickListener {
+            Intent(this, AddFaceActivity::class.java).also {
+                startActivity(it)
+            }
+        }
     }
 
     private fun mlKit() {
@@ -164,7 +185,7 @@ class MainActivity : AppCompatActivity() {
         for (cameraId in cameraIds) {
             val characteristics = cameraManager.getCameraCharacteristics(cameraId)
             val facing = characteristics.get(CameraCharacteristics.LENS_FACING)
-            if (facing == CameraCharacteristics.LENS_FACING_FRONT) {
+            if (facing == CameraCharacteristics.LENS_FACING_BACK) {
                 return cameraId
             }
         }
@@ -188,25 +209,44 @@ class MainActivity : AppCompatActivity() {
 
                 // Draw bounding boxes for all detected faces
                 for (face in faces) {
-                    Log.d("Face Landmarks", face.allLandmarks.toString())
+//                    Log.d("Face Landmarks", face.allLandmarks.toString())
+//                    Log.d("Face Contours", face.allContours.toString())
 
-                    // Debug bounding box coordinates
-                    Log.d("Bounding Box", "Left: ${face.boundingBox.left}, Right: ${face.boundingBox.right}, Top: ${face.boundingBox.top}, Bottom: ${face.boundingBox.bottom}")
+                    val faceContour = face.allContours.toString()
+                    Log.d("Face Contour", faceContour)
 
-                    // Clear canvas
-                    val canvas = binding.textureView.lockCanvas()
-                    canvas?.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
+                    val faceLandmarks = face.allLandmarks.toString()
+                    Log.d("Face Landmarks", faceLandmarks)
 
-                    // Draw bounding box
-                    val boundingBox = face.boundingBox
-                    val paint = Paint()
-                    paint.color = Color.GREEN
-                    paint.style = Paint.Style.STROKE
-                    paint.strokeWidth = 10f
-                    canvas?.drawRect(boundingBox, paint)
+                    val faceLandmarkCamera = face.allLandmarks.map { it.position }
 
-                    // Unlock and post canvas
-                    canvas?.let { binding.textureView.unlockCanvasAndPost(it) }
+                    val convertedCameraLandmarks = convertPointFListToDoubleList(faceLandmarkCamera)
+                    Log.d("Face Matching camera", "Converted camera landmarks: $convertedCameraLandmarks")
+
+                    faceCountourViewModel.readAllData.observe(this) { faceCountour ->
+                        faceCountour.forEach {
+
+                            // Mendapatkan landmark dari database
+                            val storedLandmark = it.faceContour
+
+                            val storedLandmarkValues = extractLandmarkValues(storedLandmark)
+                            Log.d("Face Matching database", "Stored landmark values: $storedLandmarkValues")
+
+                            // Comparing landmarks
+                            val matchingScore = calculateMatchingScore(convertedCameraLandmarks, storedLandmarkValues)
+                            Log.d("Face Matching", "Matching score: $matchingScore")
+
+                            val threshold = 0.5
+
+                            if (matchingScore >= threshold) {
+                                Toast.makeText(this, "Face Matched", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Log.d(TAG, "Face not matched")
+                            }
+
+                        }
+                    }
+
                 }
             }
             .addOnFailureListener { e ->
@@ -216,6 +256,61 @@ class MainActivity : AppCompatActivity() {
                 image.close()
             }
     }
+
+    private fun convertPointFListToDoubleList(pointFList: List<PointF>): List<Double> {
+        val doubleList = mutableListOf<Double>()
+
+        for (pointF in pointFList) {
+            doubleList.add(pointF.x.toDouble())
+            doubleList.add(pointF.y.toDouble())
+        }
+
+        return doubleList
+    }
+
+    private fun extractLandmarkValues(landmarkString: String): List<Double> {
+        return landmarkString
+            .substringAfter("[")
+            .substringBefore("]")
+            .split(", ")
+            .map { it.trim().substringAfter("(").substringBefore(")").toDouble() }
+    }
+
+    private fun calculateMatchingScore(cameraLandmarks: List<Double>, storedLandmarks: List<Double>): Double {
+        // Ensure the sizes match
+        if (cameraLandmarks.size * 2 != storedLandmarks.size) {
+            return 0.0
+        }
+
+        val size = cameraLandmarks.size
+        var matchingCount = 0
+
+        for (i in 0 until size step 2) { // Melakukan iterasi dengan langkah 2 untuk mengambil setiap pasangan x, y
+            val cameraX = cameraLandmarks[i]
+            val cameraY = cameraLandmarks[i + 1]
+            val storedX = storedLandmarks[i]
+            val storedY = storedLandmarks[i + 1]
+
+            Log.d("Face Matching", "Camera X: $cameraX, Camera Y: $cameraY, Stored X: $storedX, Stored Y: $storedY")
+
+
+            // Compare each coordinate individually
+            if (isCoordinateWithinTolerance(cameraX, storedX) && isCoordinateWithinTolerance(cameraY, storedY)) {
+                matchingCount++
+            }
+        }
+
+        // Calculate the matching score
+        return (matchingCount.toDouble() / (size / 2).toDouble()).pow(2.0)
+    }
+
+
+    private fun isCoordinateWithinTolerance(cameraCoordinate: Double, storedCoordinate: Double): Boolean {
+        // Adjust with your desired tolerance
+        val tolerance = 10.0
+        return abs(cameraCoordinate - storedCoordinate) <= tolerance
+    }
+
 
     private fun getPermissions() {
         val permissionsList = mutableListOf<String>()
