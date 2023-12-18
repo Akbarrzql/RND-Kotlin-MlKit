@@ -10,9 +10,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.view.Window
@@ -21,6 +19,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
 import com.example.testfacerecognition.data.FaceCountour
@@ -111,7 +110,6 @@ class AddFaceActivity : AppCompatActivity() {
                     binding.imageView.setImageBitmap(bitmapWithBoundingBox)
 
                     Toast.makeText(this, "Face detected", Toast.LENGTH_SHORT).show()
-                    val faceContour = faces[0].getContour(FaceContour.FACE)
                     for (face in faces) {
                         val faceContour = face.getContour(FaceContour.FACE)
                         Log.d("face landmark", faceContour.toString())
@@ -283,7 +281,11 @@ class AddFaceActivity : AppCompatActivity() {
 
             val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
             cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri)
-            cameraActivityResultLauncher.launch(cameraIntent)
+            try {
+                cameraActivityResultLauncher.launch(cameraIntent)
+            } catch (e: Exception) {
+                Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
         }catch (e: Exception) {
             Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
         }

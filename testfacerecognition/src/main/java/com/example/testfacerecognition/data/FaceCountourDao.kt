@@ -21,4 +21,6 @@ interface FaceCountourDao {
     @Query("SELECT * FROM face_countour ORDER BY id ASC")
     suspend fun getAllFaces(): List<FaceCountour>
 
+    //create a folder with the folder name according to the nfcId name
+
 }

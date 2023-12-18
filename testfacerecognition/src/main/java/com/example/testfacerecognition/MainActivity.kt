@@ -30,6 +30,7 @@ import com.google.mlkit.vision.face.FaceDetector
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import com.google.mlkit.vision.face.FaceLandmark
 import kotlin.math.abs
+import kotlin.math.log
 import kotlin.math.pow
 
 @Suppress("DEPRECATION")
@@ -58,6 +59,26 @@ class MainActivity : AppCompatActivity() {
         camera()
         mlKit()
         onClick()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        getPermissions()
+        initialize()
+        camera()
+        mlKit()
+        onClick()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        cameraCaptureSession.close()
+        cameraDevice.close()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        handlerThread.quitSafely()
     }
 
     private fun onClick() {
@@ -200,22 +221,28 @@ class MainActivity : AppCompatActivity() {
                 Log.d("FaceDetection", "Detected ${faces.size} faces")
 
                 faceCountourViewModel.readAllData.observe(this) { faceCountour ->
-                    faces.parallelStream().forEach { face ->
+                    for (face in faces) {
                         val convertedCameraLandmarks = convertLandmarksToList(face.allLandmarks)
                         Log.d("Face Matching", "Converted camera landmarks: $convertedCameraLandmarks")
 
-                        faceCountour.forEach { storedLandmark ->
+                        //get data form database
+                        Log.d("Face Matching", "data wajah dari database: $faceCountour")
+
+                        for (storedLandmark in faceCountour) {
+                            Log.d("Face Matching", "data landmark dari database: $storedLandmark")
+
                             val storedLandmarkValues = extractLandmarkValues(storedLandmark.faceContour)
                             Log.d("Face Matching", "Stored landmark values: $storedLandmarkValues")
 
                             val matchingScore = calculateMatchingScore(convertedCameraLandmarks, storedLandmarkValues)
                             Log.d("Face Matching", "Matching score: $matchingScore")
 
-                            // Check if all coordinates are within tolerance 75 percent with consine similarity
-                            //tolreansi dan perbandingan wajah baru bisa 47 persen
-                            if (matchingScore >= 0.47) {
-                                Log.d("Face Matching", "Face matching found!")
-                            }else{
+                            // Check if the matching score is above the threshold
+                            val threshold = 0.47
+                            if (matchingScore >= threshold) {
+                                Log.d("Face Matching", "Face matching found! ${storedLandmark.name}")
+                                break
+                            } else {
                                 Log.d("Face Matching", "Face matching not found!")
                             }
                         }
@@ -229,6 +256,7 @@ class MainActivity : AppCompatActivity() {
                 image.close()
             }
     }
+
 
     private fun convertLandmarksToList(landmarks: List<FaceLandmark>): List<Double> {
         return landmarks.flatMap { listOf(it.position.x.toDouble(), it.position.y.toDouble()) }
