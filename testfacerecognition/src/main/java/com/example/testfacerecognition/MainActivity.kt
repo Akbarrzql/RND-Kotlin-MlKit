@@ -200,26 +200,23 @@ class MainActivity : AppCompatActivity() {
                 Log.d("FaceDetection", "Detected ${faces.size} faces")
 
                 faceCountourViewModel.readAllData.observe(this) { faceCountour ->
-                    for (face in faces) {
+                    faces.parallelStream().forEach { face ->
                         val convertedCameraLandmarks = convertLandmarksToList(face.allLandmarks)
                         Log.d("Face Matching", "Converted camera landmarks: $convertedCameraLandmarks")
 
-                        for (storedLandmark in faceCountour) {
+                        faceCountour.forEach { storedLandmark ->
                             val storedLandmarkValues = extractLandmarkValues(storedLandmark.faceContour)
                             Log.d("Face Matching", "Stored landmark values: $storedLandmarkValues")
 
                             val matchingScore = calculateMatchingScore(convertedCameraLandmarks, storedLandmarkValues)
                             Log.d("Face Matching", "Matching score: $matchingScore")
 
-                            val accuracyThreshold = 0.85 // Set the desired accuracy threshold (75%)
-                            val accuracyValue = matchingScore * accuracyThreshold
-                            Log.d("Face Matching", "Accuracy value: $accuracyValue")
-
-                            if (matchingScore > accuracyValue) {
-                                // Faces match based on specified accuracy threshold
-                                Log.d("Face Matching", "Faces match!  ${storedLandmark.name}")
+                            // Check if all coordinates are within tolerance 75 percent with consine similarity
+                            //tolreansi dan perbandingan wajah baru bisa 47 persen
+                            if (matchingScore >= 0.47) {
+                                Log.d("Face Matching", "Face matching found!")
                             }else{
-                                Log.d("Face Matching", "Wajah tidak dikenali")
+                                Log.d("Face Matching", "Face matching not found!")
                             }
                         }
                     }
@@ -245,14 +242,16 @@ class MainActivity : AppCompatActivity() {
             .map { it.trim().substringAfter("(").substringBefore(")").toDouble() }
     }
 
-    private fun calculateMatchingScore(cameraLandmarks: List<Double>, storedLandmarks: List<Double>): Double {
-        //perhitungan matching score dengan euclidean distance
-        var sum = 0.0
-        for (i in cameraLandmarks.indices) {
-            sum += (cameraLandmarks[i] - storedLandmarks[i]).pow(2)
-        }
-        return 1 / (1 + sum)
 
+
+    private fun calculateMatchingScore(cameraLandmarks: List<Double>, storedLandmarks: List<Double>): Double {
+        // Perhitungan matching score dengan Cosine Similarity
+        // https://en.wikipedia.org/wiki/Cosine_similarity
+        val dotProduct = cameraLandmarks.zip(storedLandmarks).map { it.first * it.second }.sum()
+        val cameraLandmarksMagnitude = cameraLandmarks.map { it.pow(2) }.sum().pow(0.5)
+        val storedLandmarksMagnitude = storedLandmarks.map { it.pow(2) }.sum().pow(0.5)
+
+        return dotProduct / (cameraLandmarksMagnitude * storedLandmarksMagnitude)
     }
 
     private fun isCoordinateWithinTolerance(cameraCoordinate: Double, storedCoordinate: Double): Boolean {
