@@ -307,7 +307,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun isCoordinateWithinTolerance(cameraCoordinate: Double, storedCoordinate: Double): Boolean {
         // Adjust with your desired tolerance
-        val tolerance = 10.0
+        val tolerance = 0.1
         return abs(cameraCoordinate - storedCoordinate) <= tolerance
     }
 

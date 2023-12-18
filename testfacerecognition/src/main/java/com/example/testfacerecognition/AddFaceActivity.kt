@@ -12,6 +12,7 @@ import android.graphics.Rect
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.view.Window
@@ -20,6 +21,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
 import com.example.testfacerecognition.data.FaceCountour
 import com.example.testfacerecognition.databinding.ActivityAddFaceBinding
@@ -30,6 +32,10 @@ import com.google.mlkit.vision.face.FaceContour
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetector
 import com.google.mlkit.vision.face.FaceDetectorOptions
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class AddFaceActivity : AppCompatActivity() {
 
@@ -247,16 +253,42 @@ class AddFaceActivity : AppCompatActivity() {
     }
 
     private fun pickCamera() {
-        val values = ContentValues()
-        values.put(MediaStore.Images.Media.TITLE, "New Picture")
-        values.put(MediaStore.Images.Media.DESCRIPTION, "From Camera")
+        try {
+            val values = ContentValues()
+            values.put(MediaStore.Images.Media.TITLE, "New Picture")
+            values.put(MediaStore.Images.Media.DESCRIPTION, "From Camera")
 
-        imageUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+            // Get the directory path for "face recognition" in the external files directory
+            val directory = File(getExternalFilesDir(null), "face recognition")
 
-        val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri)
-        cameraActivityResultLauncher.launch(cameraIntent)
+            // Create the directory if it doesn't exist
+            if (!directory.exists()) {
+                val isDirectoryCreated = directory.mkdirs()
+                if (!isDirectoryCreated) {
+                    // Log the error or show a message indicating that the directory creation failed
+                    Log.e("DirectoryCreation", "Failed to create directory")
+                    return
+                }
+            }
+
+            // Create a file within the directory with a unique name based on timestamp
+            val timeStamp = SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(Date())
+            val imageFileName = "$timeStamp.jpg"
+            val imageFile = File(directory, imageFileName)
+            imageUri = FileProvider.getUriForFile(
+                this,
+                "com.example.testfacerecognition.fileprovider",
+                imageFile
+            )
+
+            val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+            cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri)
+            cameraActivityResultLauncher.launch(cameraIntent)
+        }catch (e: Exception) {
+            Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
+
 
     private val cameraActivityResultLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
