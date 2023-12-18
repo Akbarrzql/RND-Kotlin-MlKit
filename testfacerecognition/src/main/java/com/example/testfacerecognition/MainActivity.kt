@@ -1,16 +1,9 @@
 package com.example.testfacerecognition
 
 import android.annotation.SuppressLint
-import android.content.ContentValues.TAG
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.ImageFormat
-import android.graphics.Paint
-import android.graphics.PointF
-import android.graphics.PorterDuff
-import android.graphics.Rect
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
@@ -18,7 +11,6 @@ import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
 import android.media.Image
 import android.media.ImageReader
-import android.nfc.Tag
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
@@ -207,46 +199,30 @@ class MainActivity : AppCompatActivity() {
             .addOnSuccessListener { faces ->
                 Log.d("FaceDetection", "Detected ${faces.size} faces")
 
-                // Draw bounding boxes for all detected faces
-                for (face in faces) {
-//                    Log.d("Face Landmarks", face.allLandmarks.toString())
-//                    Log.d("Face Contours", face.allContours.toString())
+                faceCountourViewModel.readAllData.observe(this) { faceCountour ->
+                    for (face in faces) {
+                        val convertedCameraLandmarks = convertLandmarksToList(face.allLandmarks)
+                        Log.d("Face Matching", "Converted camera landmarks: $convertedCameraLandmarks")
 
-                    val faceContour = face.allContours.toString()
-                    Log.d("Face Contour", faceContour)
+                        for (storedLandmark in faceCountour) {
+                            val storedLandmarkValues = extractLandmarkValues(storedLandmark.faceContour)
+                            Log.d("Face Matching", "Stored landmark values: $storedLandmarkValues")
 
-                    val faceLandmarks = face.allLandmarks.toString()
-                    Log.d("Face Landmarks", faceLandmarks)
-
-                    val faceLandmarkCamera = face.allLandmarks.map { it.position }
-
-                    val convertedCameraLandmarks = convertPointFListToDoubleList(faceLandmarkCamera)
-                    Log.d("Face Matching camera", "Converted camera landmarks: $convertedCameraLandmarks")
-
-                    faceCountourViewModel.readAllData.observe(this) { faceCountour ->
-                        faceCountour.forEach {
-
-                            // Mendapatkan landmark dari database
-                            val storedLandmark = it.faceContour
-
-                            val storedLandmarkValues = extractLandmarkValues(storedLandmark)
-                            Log.d("Face Matching database", "Stored landmark values: $storedLandmarkValues")
-
-                            // Comparing landmarks
                             val matchingScore = calculateMatchingScore(convertedCameraLandmarks, storedLandmarkValues)
                             Log.d("Face Matching", "Matching score: $matchingScore")
 
-                            val threshold = 0.5
+                            val accuracyThreshold = 0.85 // Set the desired accuracy threshold (75%)
+                            val accuracyValue = matchingScore * accuracyThreshold
+                            Log.d("Face Matching", "Accuracy value: $accuracyValue")
 
-                            if (matchingScore >= threshold) {
-                                Toast.makeText(this, "Face Matched", Toast.LENGTH_SHORT).show()
-                            } else {
-                                Log.d(TAG, "Face not matched")
+                            if (matchingScore > accuracyValue) {
+                                // Faces match based on specified accuracy threshold
+                                Log.d("Face Matching", "Faces match!  ${storedLandmark.name}")
+                            }else{
+                                Log.d("Face Matching", "Wajah tidak dikenali")
                             }
-
                         }
                     }
-
                 }
             }
             .addOnFailureListener { e ->
@@ -257,15 +233,8 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
-    private fun convertPointFListToDoubleList(pointFList: List<PointF>): List<Double> {
-        val doubleList = mutableListOf<Double>()
-
-        for (pointF in pointFList) {
-            doubleList.add(pointF.x.toDouble())
-            doubleList.add(pointF.y.toDouble())
-        }
-
-        return doubleList
+    private fun convertLandmarksToList(landmarks: List<FaceLandmark>): List<Double> {
+        return landmarks.flatMap { listOf(it.position.x.toDouble(), it.position.y.toDouble()) }
     }
 
     private fun extractLandmarkValues(landmarkString: String): List<Double> {
@@ -277,33 +246,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun calculateMatchingScore(cameraLandmarks: List<Double>, storedLandmarks: List<Double>): Double {
-        // Ensure the sizes match
-        if (cameraLandmarks.size * 2 != storedLandmarks.size) {
-            return 0.0
+        //perhitungan matching score dengan euclidean distance
+        var sum = 0.0
+        for (i in cameraLandmarks.indices) {
+            sum += (cameraLandmarks[i] - storedLandmarks[i]).pow(2)
         }
+        return 1 / (1 + sum)
 
-        val size = cameraLandmarks.size
-        var matchingCount = 0
-
-        for (i in 0 until size step 2) { // Melakukan iterasi dengan langkah 2 untuk mengambil setiap pasangan x, y
-            val cameraX = cameraLandmarks[i]
-            val cameraY = cameraLandmarks[i + 1]
-            val storedX = storedLandmarks[i]
-            val storedY = storedLandmarks[i + 1]
-
-            Log.d("Face Matching", "Camera X: $cameraX, Camera Y: $cameraY, Stored X: $storedX, Stored Y: $storedY")
-
-
-            // Compare each coordinate individually
-            if (isCoordinateWithinTolerance(cameraX, storedX) && isCoordinateWithinTolerance(cameraY, storedY)) {
-                matchingCount++
-            }
-        }
-
-        // Calculate the matching score
-        return (matchingCount.toDouble() / (size / 2).toDouble()).pow(2.0)
     }
-
 
     private fun isCoordinateWithinTolerance(cameraCoordinate: Double, storedCoordinate: Double): Boolean {
         // Adjust with your desired tolerance
