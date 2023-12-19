@@ -36,7 +36,6 @@ import com.example.facerecognitioncomparison.R
 import com.example.facerecognitioncomparison.databinding.ActivityMainBinding
 import com.example.facerecognitioncomparison.model.FaceNetModel
 import com.example.facerecognitioncomparison.model.Models
-import com.example.facerecognitioncomparison.activity.AddFaceActivity
 import com.google.common.util.concurrent.ListenableFuture
 import java.io.File
 import java.io.FileInputStream
@@ -96,6 +95,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        activityMainBinding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(activityMainBinding.root)
 
         // Remove the status bar to have a full screen experience
         // See this answer on SO -> https://stackoverflow.com/a/68152688/10878733
@@ -105,8 +106,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
         }
-        activityMainBinding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(activityMainBinding.root)
 
         previewView = activityMainBinding.previewView
         logTextView = activityMainBinding.logTextview
