@@ -140,79 +140,76 @@ class MainActivity : AppCompatActivity() {
         isSerializedDataStored = sharedPreferences.getBoolean(SHARED_PREF_IS_DATA_STORED_KEY, false)
         if (!isSerializedDataStored) {
             //load images from folder images
-            val imagesDirectory = File(getExternalFilesDir(null), "images")
-            val images = ArrayList<Pair<String, Bitmap>>()
-            var errorFound = false
-            if ( imagesDirectory.listFiles().isNotEmpty()) {
-                for ( doc in imagesDirectory.listFiles()!!) {
-                    if ( doc.isDirectory && !errorFound ) {
-                        val name = doc.name
-                        for ( imageDocFile in doc.listFiles()!!) {
-                            try {
-                                images.add( Pair( name , getFixedBitmap( Uri.fromFile(imageDocFile) ) ) )
-                            }
-                            catch ( e : Exception ) {
-                                errorFound = true
-                                Logger.log(
-                                    "Could not parse an image in $name directory. Make sure that the file structure is " +
-                                            "as described in the README of the project and then restart the app."
-                                )
-                                break
-                            }
-                        }
-                        Logger.log("Found ${doc.listFiles().size} images in $name directory")
-                    }
-                    else {
-                        errorFound = true
-                        Logger.log(
-                            "The selected folder should contain only directories. Make sure that the file structure is " +
-                                    "as described in the README of the project and then restart the app."
-                        )
-                    }
-                }
-            }
-            else {
-                errorFound = true
-                Logger.log(
-                    "The selected folder doesn't contain any directories. Make sure that the file structure is " +
-                            "as described in the README of the project and then restart the app."
-                )
-            }
-            if ( !errorFound ) {
-                fileReader.run( images , fileReaderCallback )
-                Logger.log("Detecting faces in ${images.size} images ...")
-            }
-            else {
-                val alertDialog = AlertDialog.Builder( this ).apply {
-                    setTitle( "Error while parsing directory")
-                    setMessage( "There were some errors while parsing the directory. Please see the log below. Make sure that the file structure is " +
-                            "as described in the README of the project and then tap RESELECT" )
-                    setCancelable( false )
-                    setPositiveButton( "RESELECT") { dialog, which ->
-                        dialog.dismiss()
-                        launchChooseDirectoryIntent()
-                    }
-                    setNegativeButton( "CANCEL" ){ dialog , which ->
-                        dialog.dismiss()
-                        finish()
-                    }
-                    create()
-                }
-                alertDialog.show()
-            }
+            initilizeFolder(nfcId ?: "")
         } else {
-            frameAnalyser.faceList = loadSerializedImageData()
-            Logger.log("Serialized data loaded.")
+            initilizeFolder(nfcId ?: "")
         }
     }
 
-    //folder images
-    private fun isImagesFolderExists(): Boolean {
+    private fun initilizeFolder(nfcId: String){
+        val imagesDirectory = File(getExternalFilesDir(null), "images/$nfcId")
+        val images = ArrayList<Pair<String, Bitmap>>()
+        var errorFound = false
+        if ( imagesDirectory.listFiles().isNotEmpty()) {
+            for ( imageFile in imagesDirectory.listFiles() ) {
+                try {
+                    images.add( Pair( nfcId , getFixedBitmap( Uri.fromFile(imageFile) ) ) )
+                }
+                catch ( e : Exception ) {
+                    errorFound = true
+                    Logger.log(
+                        "Could not parse an image in $nfcId directory. Make sure that the file structure is " +
+                                "as described in the README of the project and then restart the app."
+                    )
+                    break
+                }
+            }
+            Logger.log("Found ${imagesDirectory.listFiles().size} images in $nfcId directory")
+        }
+        else {
+            errorFound = true
+            Logger.log(
+                "The selected folder doesn't contain any directories. Make sure that the file structure is " +
+                        "as described in the README of the project and then restart the app."
+            )
+        }
+        if ( !errorFound ) {
+            fileReader.run( images , fileReaderCallback )
+            Logger.log("Detecting faces in ${images.size} images ...")
+        }
+        else {
+            val alertDialog = AlertDialog.Builder( this ).apply {
+                setTitle( "Error while parsing directory")
+                setMessage( "There were some errors while parsing the directory. Please see the log below. Make sure that the file structure is " +
+                        "as described in the README of the project and then tap RESELECT" )
+                setCancelable( false )
+                setPositiveButton( "RESELECT") { dialog, which ->
+                    dialog.dismiss()
+                    launchChooseDirectoryIntent()
+                }
+                setNegativeButton( "CANCEL" ){ dialog , which ->
+                    dialog.dismiss()
+                    finish()
+                }
+                create()
+            }
+            alertDialog.show()
+        }
+    }
+
+    //folder nfc_id in folder images
+    private fun isNfcIdFolderExists(nfcId: String): Boolean {
         // Get the directory path for "face recognition" in the external files directory
         val imagesDirectory = File(getExternalFilesDir(null), "images")
 
-        // Check if the "images" folder exists
-        return imagesDirectory.exists()
+        // Create the directory if it doesn't exist
+        if (!imagesDirectory.exists()) {
+            return false
+        }
+
+        // Check if the "nfc_id" folder exists
+        val nfcIdDirectory = File(imagesDirectory, nfcId)
+        return nfcIdDirectory.exists()
     }
 
     // ---------------------------------------------- //
