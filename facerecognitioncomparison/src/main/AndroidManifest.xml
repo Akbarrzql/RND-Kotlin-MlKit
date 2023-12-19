@@ -3,8 +3,14 @@
 
     <uses-feature
         android:name="android.hardware.camera"
-        android:required="true"/>
-    <uses-permission android:name="android.permission.CAMERA"/>
+        android:required="true" />
+    <uses-feature
+        android:name="android.hardware.nfc"
+        android:required="false" />
+
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.NFC" />
 
     <application
         android:allowBackup="true"
@@ -14,7 +20,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.RNDkotlinapps">
         <activity
-            android:name=".MainActivity"
+            android:name=".activity.DetectionActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.NFCActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -22,6 +31,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".activity.AddFaceActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.MainActivity"
+            android:exported="true"></activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.example.facerecognitioncomparison.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

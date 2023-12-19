@@ -7,7 +7,7 @@ class Models {
         val FACENET = ModelInfo(
             "FaceNet" ,
             "facenet.tflite" ,
-            0.4f ,
+            0.75f ,
             10f ,
             128 ,
             160

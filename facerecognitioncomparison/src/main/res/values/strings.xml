@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">facerecognitioncomparison</string>
+    <string name="ulangi_foto">Ulangi Foto</string>
+    <string name="tambah_wajah">Tambah Wajah</string>
 </resources>

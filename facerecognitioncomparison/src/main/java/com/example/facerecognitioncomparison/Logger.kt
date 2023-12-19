@@ -15,6 +15,7 @@
 package com.example.facerecognitioncomparison
 
 import android.util.Log
+import com.example.facerecognitioncomparison.activity.MainActivity
 
 // Logs message using log_textview present in activity_main.xml
 class Logger {
