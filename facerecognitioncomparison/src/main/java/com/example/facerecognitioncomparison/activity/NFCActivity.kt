@@ -14,6 +14,7 @@ import android.util.Log
 import android.widget.TextView
 import com.example.facerecognitioncomparison.databinding.ActivityNfcactivityBinding
 import com.example.facerecognitioncomparison.utils.WritableTag
+import java.io.File
 
 class NFCActivity : AppCompatActivity() {
 
@@ -117,14 +118,36 @@ class NFCActivity : AppCompatActivity() {
             }
         }
         binding.nfcId.text = nfcid
-        val intent = Intent(this, DetectionActivity::class.java)
-        intent.putExtra("nfcid", nfcid)
-        startActivity(intent)
+        val nfcId = nfcid
+        Log.d("check NFCID", nfcId)
+        if (isNfcIdFolderExists(nfcId)) {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.putExtra("nfcid", nfcId)
+            startActivity(intent)
+        } else {
+            val intent = Intent(this, AddFaceActivity::class.java)
+            intent.putExtra("nfcid", nfcId)
+            startActivity(intent)
+        }
         Log.d("nfc", nfcid)
         txtNfc?.text = nfcid
         return  nfcid
     }
 
     private fun onTagTapped() {}
+
+    private fun isNfcIdFolderExists(nfcId: String): Boolean {
+        // Get the directory path for "face recognition" in the external files directory
+        val imagesDirectory = File(getExternalFilesDir(null), "images")
+
+        // Create the directory if it doesn't exist
+        if (!imagesDirectory.exists()) {
+            return false
+        }
+
+        // Check if the "nfc_id" folder exists
+        val nfcIdDirectory = File(imagesDirectory, nfcId)
+        return nfcIdDirectory.exists()
+    }
 
 }

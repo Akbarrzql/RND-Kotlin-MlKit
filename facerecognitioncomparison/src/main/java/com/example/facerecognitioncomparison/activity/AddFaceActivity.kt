@@ -89,8 +89,8 @@ class AddFaceActivity : AppCompatActivity() {
                 if (faces.size == 0) {
                     Toast.makeText(this, "No face detected", Toast.LENGTH_SHORT).show()
                 } else {
-                    val bitmapWithBoundingBox = drawBoundingBoxesOnBitmap(originalBitmap, faces, "Belum Terdaftar")
-                    binding.imageView.setImageBitmap(bitmapWithBoundingBox)
+//                    val bitmapWithBoundingBox = drawBoundingBoxesOnBitmap(originalBitmap, faces, "Belum Terdaftar")
+//                    binding.imageView.setImageBitmap(bitmapWithBoundingBox)
 
                     Toast.makeText(this, "Face detected", Toast.LENGTH_SHORT).show()
                     for (face in faces) {

@@ -39,8 +39,6 @@ class DetectionActivity : AppCompatActivity() {
     private var listCountour = arrayListOf<String>()
 
     private val handler = Handler(Looper.getMainLooper())
-    private val TIMEOUT_DELAY = 5000L
-    private val TIMEOUT_CHECK_INTERVAL = 5000L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -130,17 +128,17 @@ class DetectionActivity : AppCompatActivity() {
                 }
             }
 
-            fun checkTimeout() {
-                val currentTime = System.currentTimeMillis()
-                if (currentTime - taskStartTime > TIMEOUT_DELAY) {
-                    Toast.makeText(
-                        this@DetectionActivity,
-                        "Anda bukan manusia",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    finishForResult()
-                }
-            }
+//            fun checkTimeout() {
+//                val currentTime = System.currentTimeMillis()
+//                if (currentTime - taskStartTime > TIMEOUT_DELAY) {
+//                    Toast.makeText(
+//                        this@DetectionActivity,
+//                        "Anda bukan manusia",
+//                        Toast.LENGTH_LONG
+//                    ).show()
+//                    finish()
+//                }
+//            }
 
         }
 
@@ -153,43 +151,20 @@ class DetectionActivity : AppCompatActivity() {
             it.setListener(listener)
 
             // Schedule a delayed task to show toast after TIMEOUT_DELAY milliseconds
-            handler.postDelayed(object : Runnable {
-                override fun run() {
-                    listener.checkTimeout()
-                    handler.postDelayed(this, TIMEOUT_CHECK_INTERVAL)
-                }
-            }, TIMEOUT_CHECK_INTERVAL)
+//            handler.postDelayed(object : Runnable {
+//                override fun run() {
+//                    listener.checkTimeout()
+//                    handler.postDelayed(this, TIMEOUT_CHECK_INTERVAL)
+//                }
+//            }, TIMEOUT_CHECK_INTERVAL)
         }
     }
 
     private fun finishForResult() {
-        val nfcId = intent.getStringExtra("nfcid") ?: ""
-        Log.d("check NFCID", nfcId)
-        if (isNfcIdFolderExists(nfcId)) {
-            val intent = Intent(this, MainActivity::class.java)
-            intent.putExtra("nfcid", nfcId)
-            startActivity(intent)
-        } else {
-            val intent = Intent(this, AddFaceActivity::class.java)
-            intent.putExtra("nfcid", nfcId)
-            startActivity(intent)
-        }
+        val intent = Intent(this, NFCActivity::class.java)
+        startActivity(intent)
     }
 
-
-    private fun isNfcIdFolderExists(nfcId: String): Boolean {
-        // Get the directory path for "face recognition" in the external files directory
-        val imagesDirectory = File(getExternalFilesDir(null), "images")
-
-        // Create the directory if it doesn't exist
-        if (!imagesDirectory.exists()) {
-            return false
-        }
-
-        // Check if the "nfc_id" folder exists
-        val nfcIdDirectory = File(imagesDirectory, nfcId)
-        return nfcIdDirectory.exists()
-    }
 
     private fun takePhoto(file: File, onSaved: (File) -> Unit) {
         cameraController.takePicture(

@@ -97,7 +97,7 @@ class BoundingBoxOverlay( context: Context , attributeSet: AttributeSet )
                     val centerY = boundingBox.centerY()
 
                     // Calculate the square bounding box size
-                    val boxSize = max(boundingBox.width(), boundingBox.height())
+                    val boxSize = max(boundingBox.width(), boundingBox.height()) * 1.8f
 
                     // Adjust the bounding box to be square and centered
                     boundingBox.left = centerX - boxSize / 2

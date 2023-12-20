@@ -16,10 +16,13 @@ package com.example.facerecognitioncomparison
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
+import androidx.core.content.ContextCompat.startActivity
+import com.example.facerecognitioncomparison.activity.ResultActivity
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
@@ -64,6 +67,9 @@ class FrameAnalyser(context: Context,
 
     // Use this variable to enable/disable mask detection.
     private val isMaskDetectionOn = true
+
+    private var isIntentStarted = false
+    private var identifyName = ""
 
     // <-------------------------------------------------------->
 
@@ -115,7 +121,8 @@ class FrameAnalyser(context: Context,
         withContext( Dispatchers.Default ) {
             t1 = System.currentTimeMillis()
             val predictions = ArrayList<Prediction>()
-            for (face in faces) {
+            val largestFace = faces.maxByOrNull { it.boundingBox.width() * it.boundingBox.height() }
+            largestFace?.let { face ->
                 try {
                     // Crop the frame using face.boundingBox.
                     // Convert the cropped Bitmap to a ByteBuffer.
@@ -188,6 +195,17 @@ class FrameAnalyser(context: Context,
                             }
                         }
                         Logger.log("Person identified as $bestScoreUserName")
+                        identifyName = bestScoreUserName
+
+                        // Start the ResultActivity dan hanya sekali saja tidak berulang
+                        if (identifyName != "Unknown" && !isIntentStarted) {
+                            val intent = Intent(boundingBoxOverlay.context, ResultActivity::class.java)
+                            intent.putExtra("nfcid", identifyName)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            boundingBoxOverlay.context.startActivity(intent)
+                            isIntentStarted = true
+                        }
+
                         predictions.add(
                             Prediction(
                                 face.boundingBox,
@@ -210,7 +228,6 @@ class FrameAnalyser(context: Context,
                 catch ( e : Exception ) {
                     // If any exception occurs with this box and continue with the next boxes.
                     Log.e( "Model" , "Exception in FrameAnalyser : ${e.message}" )
-                    continue
                 }
                 Log.e( "Performance" , "Inference time -> ${System.currentTimeMillis() - t1}")
             }

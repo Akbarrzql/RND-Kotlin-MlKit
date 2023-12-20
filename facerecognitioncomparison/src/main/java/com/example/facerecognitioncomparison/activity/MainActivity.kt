@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.Outline
 import android.media.ExifInterface
 import android.net.Uri
 import android.os.Build
@@ -15,6 +16,7 @@ import android.provider.DocumentsContract
 import android.text.method.ScrollingMovementMethod
 import android.util.Size
 import android.view.View
+import android.view.ViewOutlineProvider
 import android.view.WindowInsets
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
@@ -108,6 +110,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         previewView = activityMainBinding.previewView
+        activityMainBinding.previewView.clipToOutline = true
+        activityMainBinding.previewView.outlineProvider = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                outline.setRoundRect(0, 0, view.width, view.height, view.height / 2.0f)
+            }
+        }
         logTextView = activityMainBinding.logTextview
         logTextView.movementMethod = ScrollingMovementMethod()
         // Necessary to keep the Overlay above the PreviewView so that the boxes are visible.
@@ -178,15 +186,16 @@ class MainActivity : AppCompatActivity() {
         }
         else {
             val alertDialog = AlertDialog.Builder( this ).apply {
-                setTitle( "Error while parsing directory")
-                setMessage( "There were some errors while parsing the directory. Please see the log below. Make sure that the file structure is " +
-                        "as described in the README of the project and then tap RESELECT" )
+                setTitle( "Terjadi Kesalahan")
+                setMessage("Tidak ada gambar yang terdeteksi. Pastikan folder images/$nfcId berisi gambar yang sesuai dengan format yang telah ditentukan.")
                 setCancelable( false )
-                setPositiveButton( "RESELECT") { dialog, which ->
+                setPositiveButton( "Ambil Wajah") { dialog, which ->
                     dialog.dismiss()
-                    launchChooseDirectoryIntent()
+                    val intent = Intent(this@MainActivity, AddFaceActivity::class.java)
+                    intent.putExtra("nfcid", nfcId)
+                    startActivity(intent)
                 }
-                setNegativeButton( "CANCEL" ){ dialog , which ->
+                setNegativeButton( "Batal" ){ dialog , which ->
                     dialog.dismiss()
                     finish()
                 }

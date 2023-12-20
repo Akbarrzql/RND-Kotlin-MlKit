@@ -20,10 +20,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.RNDkotlinapps">
         <activity
-            android:name=".activity.DetectionActivity"
+            android:name=".activity.ResultActivity"
             android:exported="false" />
         <activity
-            android:name=".activity.NFCActivity"
+            android:name=".activity.DetectionActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -32,11 +32,14 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".activity.NFCActivity"
+            android:exported="false"/>
+        <activity
             android:name=".activity.AddFaceActivity"
             android:exported="false" />
         <activity
             android:name=".activity.MainActivity"
-            android:exported="false"/>
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
